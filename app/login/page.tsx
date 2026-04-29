@@ -62,7 +62,7 @@ export default function LoginPage() {
         {mode === "register" && (
           <input
             style={styles.input}
-            placeholder="Username lo"
+            placeholder="Masukin username nya sayaang"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
