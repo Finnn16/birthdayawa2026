@@ -13,7 +13,8 @@
     "react-dom": "^18",
     "@supabase/supabase-js": "^2.43.1",
     "@supabase/ssr": "^0.3.0",
-    "canvas-confetti": "^1.9.3"
+    "canvas-confetti": "^1.9.3",
+    "twilio": "^4.10.0"
   },
   "devDependencies": {
     "typescript": "^5",
