@@ -18,6 +18,7 @@ import { StatCard } from "@/components/common/StatCard";
 import { CalendarGrid } from "@/components/common/CalendarGrid";
 import { NotesList } from "@/components/common/NotesList";
 import { HistoryList } from "@/components/common/HistoryList";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function AdminDashboard() {
   const router = useRouter();

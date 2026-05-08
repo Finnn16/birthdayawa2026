@@ -3,11 +3,22 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import twilio from "twilio";
 
-// Twilio client initialization
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN,
-);
+let twilioClient: ReturnType<typeof twilio> | null = null;
+
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!accountSid || !authToken) {
+    return null;
+  }
+
+  if (!twilioClient) {
+    twilioClient = twilio(accountSid, authToken);
+  }
+
+  return twilioClient;
+}
 
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER || "";
 
@@ -28,6 +39,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const twilioClient = getTwilioClient();
+
+    if (!twilioClient || !TWILIO_PHONE_NUMBER) {
+      return NextResponse.json(
+        {
+          error: "Twilio configuration is missing",
+          details:
+            "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER.",
+        },
+        { status: 500 },
+      );
+    }
+
     const cookieStore = cookies();
 
     // Create Supabase server client
@@ -113,9 +137,15 @@ export async function POST(req: NextRequest) {
     const notificationResults = [];
 
     for (const user of usersToNotify) {
+      const rawPhoneNumber = user.phone_number;
+
       try {
+        if (!rawPhoneNumber) {
+          throw new Error("Missing phone number");
+        }
+
         // Format phone number to E.164 format if needed
-        const phoneNumber = formatPhoneNumber(user.phone_number);
+        const phoneNumber = formatPhoneNumber(rawPhoneNumber);
 
         // Send WhatsApp message via Twilio
         const message = await twilioClient.messages.create({
@@ -150,7 +180,7 @@ export async function POST(req: NextRequest) {
         await supabase.from("notification_logs").insert({
           user_id: user.id,
           notification_type: "mood_reminder",
-          phone_number: user.phone_number,
+          phone_number: rawPhoneNumber,
           status: "failed",
           error_message: error.message,
         });
@@ -158,7 +188,7 @@ export async function POST(req: NextRequest) {
         notificationResults.push({
           userId: user.id,
           username: user.username,
-          phone: user.phone_number,
+          phone: rawPhoneNumber,
           status: "failed",
           error: error.message,
         });

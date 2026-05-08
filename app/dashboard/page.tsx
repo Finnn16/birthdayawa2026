@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { LoadingSpinner, LoadingButton } from "@/components/LoadingSpinner";
 
 const EMOJI_MAP: Record<number, string> = {
   1: "😭",
@@ -42,6 +43,7 @@ export default function Dashboard() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [result, setResult] = useState<{
     message: string;
     streakDay: number;
@@ -112,11 +114,13 @@ export default function Dashboard() {
   }
 
   async function handleLogout() {
+    setLogoutLoading(true);
     await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "logout" }),
     });
+    setLogoutLoading(false);
     router.push("/login");
   }
 
@@ -128,13 +132,10 @@ export default function Dashboard() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          padding: "24px",
         }}
       >
-        <p
-          style={{ color: "var(--text-muted)", fontFamily: "Syne, sans-serif" }}
-        >
-          loading...
-        </p>
+        <LoadingSpinner label="Ambil data kamu..." />
       </div>
     );
 
@@ -150,9 +151,13 @@ export default function Dashboard() {
         </div>
         <div style={s.headerRight}>
           <span style={s.username}>@{username}</span>
-          <button style={s.logoutBtn} onClick={handleLogout}>
+          <LoadingButton
+            style={s.logoutBtn}
+            onClick={handleLogout}
+            loading={logoutLoading}
+          >
             Keluar
-          </button>
+          </LoadingButton>
         </div>
       </div>
 
@@ -176,6 +181,8 @@ export default function Dashboard() {
       </div>
 
       <div style={s.main}>
+        <BirthdayCountdown />
+
         {/* INPUT CARD */}
         <div style={s.card}>
           {alreadySubmitted ? (
@@ -231,21 +238,16 @@ export default function Dashboard() {
 
               {error && <p style={s.error}>{error}</p>}
 
-              <button
+              <LoadingButton
                 style={{
                   ...s.submitBtn,
                   background: currentColor,
-                  opacity: submitting ? 0.7 : 1,
                 }}
                 onClick={handleSubmit}
-                disabled={submitting}
+                loading={submitting}
               >
-                {submitting
-                  ? rating <= 3
-                    ? "lagi dipikirin..."
-                    : "nyimpen..."
-                  : "Catat Mood"}
-              </button>
+                Catat Mood
+              </LoadingButton>
             </>
           )}
         </div>
@@ -390,12 +392,119 @@ function ResultView({
   );
 }
 
+function BirthdayCountdown() {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const targetTime = new Date("2026-05-25T00:00:00+07:00").getTime();
+  const startTime = new Date("2026-05-08T00:00:00+07:00").getTime();
+  const totalWindow = targetTime - startTime;
+  const remaining = Math.max(targetTime - now, 0);
+  const isBirthdayReached = remaining === 0;
+
+  const days = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+
+  async function handleCelebrate() {
+    const confetti = (await import("canvas-confetti")).default;
+    const edgeBursts = [
+      {
+        origin: { x: 0.02, y: 0.72 },
+        angle: 18,
+        spread: 58,
+      },
+      {
+        origin: { x: 0.98, y: 0.72 },
+        angle: 162,
+        spread: 58,
+      },
+      {
+        origin: { x: 0.02, y: 0.58 },
+        angle: 28,
+        spread: 44,
+      },
+      {
+        origin: { x: 0.98, y: 0.58 },
+        angle: 152,
+        spread: 44,
+      },
+    ] as const;
+
+    for (const burst of edgeBursts) {
+      confetti({
+        ...burst,
+        particleCount: 95,
+        startVelocity: 52,
+        scalar: 1.05,
+        ticks: 240,
+        gravity: 1.08,
+        decay: 0.915,
+        drift: burst.origin.x < 0.5 ? 0.28 : -0.28,
+        colors: ["#ff4f9a", "#ff86bf", "#ffd3e4", "#ffb7d2", "#fff0f7"],
+        shapes: ["circle", "square"],
+      });
+    }
+
+    confetti({
+      particleCount: 24,
+      spread: 38,
+      startVelocity: 20,
+      scalar: 1.45,
+      origin: { x: 0.5, y: 0.45 },
+      angle: 90,
+      ticks: 220,
+      colors: ["#ffffff", "#ffc6dd", "#ff7eb6"],
+      shapes: ["circle"],
+      drift: 0,
+      disableForReducedMotion: true,
+    });
+  }
+
+  return (
+    <div style={s.birthdayCard}>
+      <div style={s.birthdayGlow} />
+      <h2 style={s.birthdayHeadline}>ULANG TAHUN SAYAAANGKU💝💖</h2>
+
+      <div style={s.countdownGrid}>
+        <CountdownTile value={String(days).padStart(2, "0")} label="Hari" />
+        <CountdownTile value={String(hours).padStart(2, "0")} label="Jam" />
+        <CountdownTile value={String(minutes).padStart(2, "0")} label="Menit" />
+        <CountdownTile value={String(seconds).padStart(2, "0")} label="Detik" />
+      </div>
+
+      <div style={s.birthdayActions}>
+        <button type="button" style={s.surpriseBtn} onClick={handleCelebrate}>
+          Surprise
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CountdownTile({ value, label }: { value: string; label: string }) {
+  return (
+    <div style={s.countdownTile}>
+      <span style={s.countdownValue}>{value}</span>
+      <span style={s.countdownLabel}>{label}</span>
+    </div>
+  );
+}
+
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
     padding: "0 0 80px",
     background:
-      "radial-gradient(ellipse at 50% -10%, rgba(200,255,87,0.05) 0%, transparent 50%)",
+      "radial-gradient(circle at top, rgba(255,176,215,0.18) 0%, transparent 42%), radial-gradient(circle at 20% 20%, rgba(255,105,180,0.10) 0%, transparent 28%), linear-gradient(180deg, #180c13 0%, #130a10 100%)",
   },
   header: {
     display: "flex",
@@ -439,8 +548,93 @@ const s: Record<string, React.CSSProperties> = {
     minWidth: 120,
     flexShrink: 0,
   },
+  birthdayCard: {
+    position: "relative",
+    overflow: "hidden",
+    padding: 22,
+    borderRadius: "calc(var(--radius) + 4px)",
+    border: "1px solid rgba(255, 161, 201, 0.32)",
+    background:
+      "linear-gradient(135deg, rgba(255, 105, 180, 0.16) 0%, rgba(255, 214, 230, 0.1) 48%, rgba(61, 34, 48, 0.96) 100%)",
+    boxShadow: "0 24px 60px rgba(255, 105, 180, 0.14)",
+  },
+  birthdayHeadline: {
+    position: "relative",
+    zIndex: 1,
+    marginBottom: 14,
+    textAlign: "center",
+    fontFamily: "Quicksand, sans-serif",
+    fontSize: 26,
+    lineHeight: 1.15,
+    fontWeight: 700,
+    color: "#fff1f8",
+    letterSpacing: 0.2,
+  },
+  birthdayGlow: {
+    position: "absolute",
+    inset: "auto -30px -60px auto",
+    width: 150,
+    height: 150,
+    borderRadius: "50%",
+    background:
+      "radial-gradient(circle, rgba(255, 143, 188, 0.35) 0%, transparent 70%)",
+    filter: "blur(8px)",
+    pointerEvents: "none",
+  },
+  countdownGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: 10,
+    marginTop: 0,
+  },
+  countdownTile: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    padding: "16px 10px",
+    borderRadius: 16,
+    background: "rgba(255, 241, 247, 0.08)",
+    border: "1px solid rgba(255, 195, 219, 0.18)",
+  },
+  countdownValue: {
+    fontFamily: "Quicksand, sans-serif",
+    fontSize: 34,
+    fontWeight: 800,
+    lineHeight: 1,
+    color: "#fff1f8",
+    letterSpacing: 0.5,
+  },
+  countdownLabel: {
+    fontSize: 12,
+    color: "#f5bfd4",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  birthdayActions: {
+    marginTop: 14,
+    display: "flex",
+    gap: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  surpriseBtn: {
+    border: "none",
+    borderRadius: 999,
+    padding: "12px 20px",
+    background: "linear-gradient(135deg, #ff7eb6 0%, #ffc6dd 100%)",
+    color: "#31111f",
+    fontFamily: "Quicksand, sans-serif",
+    fontSize: 15,
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: "0 14px 28px rgba(255, 126, 182, 0.28)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+  },
   main: {
-    maxWidth: 480,
+    maxWidth: 560,
     margin: "0 auto",
     padding: "16px 24px",
     display: "flex",
@@ -448,10 +642,12 @@ const s: Record<string, React.CSSProperties> = {
     gap: 16,
   },
   card: {
-    background: "var(--surface)",
+    background:
+      "linear-gradient(180deg, rgba(61,34,48,0.96) 0%, rgba(45,24,32,0.96) 100%)",
     border: "1px solid var(--border)",
     borderRadius: "var(--radius)",
     padding: 24,
+    boxShadow: "0 16px 40px rgba(0, 0, 0, 0.18)",
   },
   cardTitle: {
     fontSize: 16,
