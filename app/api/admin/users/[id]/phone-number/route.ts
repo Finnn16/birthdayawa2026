@@ -9,10 +9,11 @@ import { cookies } from "next/headers";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const cookieStore = cookies();
+    const { id } = await params;
+    const cookieStore = await cookies();
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,7 +56,7 @@ export async function PUT(
     const { data: user, error: fetchError } = await supabase
       .from("users")
       .select("id, username, phone_number")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (fetchError || !user) {
@@ -65,7 +66,7 @@ export async function PUT(
     const { error: updateError } = await supabase
       .from("users")
       .update({ phone_number })
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (updateError) {
       console.error("Error updating phone number:", updateError);
@@ -82,7 +83,7 @@ export async function PUT(
       success: true,
       message: "Phone number updated successfully",
       user: {
-        id: params.id,
+        id,
         username: user.username,
         phone_number,
         updated_at: new Date().toISOString(),
@@ -99,10 +100,11 @@ export async function PUT(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const cookieStore = cookies();
+    const { id } = await params;
+    const cookieStore = await cookies();
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -121,7 +123,7 @@ export async function GET(
     const { data: user, error } = await supabase
       .from("users")
       .select("id, username, phone_number, created_at")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (error || !user) {
@@ -140,10 +142,11 @@ export async function GET(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const cookieStore = cookies();
+    const { id } = await params;
+    const cookieStore = await cookies();
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -162,7 +165,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from("users")
       .update({ phone_number: null })
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (deleteError) {
       return NextResponse.json(

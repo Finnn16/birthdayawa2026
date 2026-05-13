@@ -11,10 +11,6 @@ interface NotesListProps {
   emptyMessage?: string;
 }
 
-/**
- * Generic Notes List Component
- * Menampilkan list catatan dengan expand/collapse
- */
 export function NotesList({
   moods,
   getEmoji = () => "",
@@ -48,7 +44,6 @@ export function NotesList({
             }}
             onClick={() => setSelectedId(isSelected ? null : mood.id)}
           >
-            {/* Header */}
             <div
               style={{
                 display: "flex",
@@ -82,7 +77,6 @@ export function NotesList({
               </span>
             </div>
 
-            {/* Content - expanded */}
             {isSelected && mood.note && (
               <p
                 style={{
@@ -93,7 +87,7 @@ export function NotesList({
                   paddingLeft: 4,
                 }}
               >
-                "{mood.note}"
+                &quot;{mood.note}&quot;
               </p>
             )}
           </div>

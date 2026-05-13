@@ -1,21 +1,13 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
-import { LoadingSpinner, LoadingButton } from "@/components/LoadingSpinner";
 
-const EMOJI_MAP: Record<number, string> = {
-  1: "😭",
-  2: "😔",
-  3: "😞",
-  4: "😐",
-  5: "🙂",
-  6: "😊",
-  7: "😄",
-  8: "🤩",
-  9: "🔥",
-  10: "👑",
-};
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { useRouter } from "next/navigation";
+import { BIRTHDAY_DATE, BIRTHDAY_START_DATE } from "@/lib/app-config";
+import { createClient } from "@/lib/supabase";
+import { EMOJI_MAP, type LevelProgressData } from "@/lib/mood-types";
+import { type MiniGame } from "@/lib/minigames";
+import { LoadingButton, LoadingSpinner } from "@/components/LoadingSpinner";
 
 const ratingColor = (r: number) => {
   if (r <= 3) return "#ff5757";
@@ -25,7 +17,7 @@ const ratingColor = (r: number) => {
 };
 
 type DashboardData = {
-  todayMood: { rating: number; note: string; streak_day: number } | null;
+  todayMood: { rating: number; note: string | null; streak_day: number } | null;
   history: {
     date: string;
     rating: number;
@@ -34,11 +26,24 @@ type DashboardData = {
   }[];
   totalXP: number;
   currentStreak: number;
+  streakMultiplier: number;
+  level: LevelProgressData;
+};
+
+type MiniGameCompletionData = {
+  minigame_id: string;
+  is_correct: boolean;
+  xp_earned: number;
 };
 
 export default function Dashboard() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [miniGames, setMiniGames] = useState<MiniGame[]>([]);
+  const [completions, setCompletions] = useState<MiniGameCompletionData[]>([]);
+  const [miniGameMessage, setMiniGameMessage] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [submittingGameId, setSubmittingGameId] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,9 +53,20 @@ export default function Dashboard() {
     message: string;
     streakDay: number;
     xpEarned: number;
+    multiplier?: number;
   } | null>(null);
   const [error, setError] = useState("");
   const [username, setUsername] = useState("");
+
+  const fetchMiniGames = useCallback(async () => {
+    const res = await fetch("/api/minigames");
+    if (res.status === 401) return;
+
+    const json = await res.json();
+    setMiniGames(json.minigames ?? []);
+    setCompletions(json.completions ?? []);
+    setMiniGameMessage(json.message ?? "");
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -62,11 +78,11 @@ export default function Dashboard() {
     const json = await res.json();
     setData(json);
     setLoading(false);
-  }, [router]);
+    fetchMiniGames();
+  }, [fetchMiniGames, router]);
 
   useEffect(() => {
     fetchData();
-    // Get username
     createClient()
       .auth.getUser()
       .then(({ data: d }) => {
@@ -93,11 +109,9 @@ export default function Dashboard() {
       return;
     }
 
-    // Delay untuk mood rendah — biar kerasa "dipikirin"
     const delay = rating <= 3 ? 1800 : rating <= 6 ? 800 : 400;
-    await new Promise((r) => setTimeout(r, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
 
-    // Confetti untuk mood tinggi
     if (rating >= 8 && typeof window !== "undefined") {
       const confetti = (await import("canvas-confetti")).default;
       confetti({
@@ -113,6 +127,32 @@ export default function Dashboard() {
     fetchData();
   }
 
+  async function handleMiniGameComplete(gameId: string) {
+    setSubmittingGameId(gameId);
+    setMiniGameMessage("");
+
+    const res = await fetch(`/api/minigames/${gameId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answer: answers[gameId] ?? "" }),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      setMiniGameMessage(json.error ?? "Mini-game belum bisa disimpan.");
+      setSubmittingGameId(null);
+      return;
+    }
+
+    setMiniGameMessage(
+      json.isCorrect
+        ? `Yeay, +${json.xpEarned} XP dari mini-game.`
+        : "Jawabannya belum pas, tapi tetap dicatat ya.",
+    );
+    setSubmittingGameId(null);
+    fetchData();
+  }
+
   async function handleLogout() {
     setLogoutLoading(true);
     await fetch("/api/auth", {
@@ -124,30 +164,31 @@ export default function Dashboard() {
     router.push("/login");
   }
 
-  if (loading)
+  const completionByGameId = useMemo(
+    () =>
+      completions.reduce<Record<string, MiniGameCompletionData>>((map, completion) => {
+        map[completion.minigame_id] = completion;
+        return map;
+      }, {}),
+    [completions],
+  );
+
+  if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "24px",
-        }}
-      >
+      <div style={s.centerPage}>
         <LoadingSpinner label="Ambil data kamu..." />
       </div>
     );
+  }
 
   const alreadySubmitted = !!data?.todayMood;
   const currentColor = ratingColor(rating);
 
   return (
     <div style={s.page}>
-      {/* Header */}
       <div style={s.header}>
         <div>
-          <span style={s.logo}>🌡 MoodTrack</span>
+          <span style={s.logo}>💗 BirthdayAwa</span>
         </div>
         <div style={s.headerRight}>
           <span style={s.username}>@{username}</span>
@@ -161,12 +202,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats bar */}
       <div style={s.statsBar}>
+        <StatChip emoji="⚡" label="Total XP" value={`${data?.totalXP ?? 0} XP`} />
         <StatChip
-          emoji="⚡"
-          label="Total XP"
-          value={`${data?.totalXP ?? 0} XP`}
+          emoji="💞"
+          label="Level"
+          value={
+            data?.level
+              ? `${data.level.currentLevel.levelNumber} - ${data.level.currentLevel.levelName}`
+              : "Level 1"
+          }
         />
         <StatChip
           emoji="🔥"
@@ -174,16 +219,17 @@ export default function Dashboard() {
           value={`${data?.currentStreak ?? 0} hari`}
         />
         <StatChip
-          emoji="📅"
-          label="Catatan"
-          value={`${data?.history.length ?? 0} hari`}
+          emoji="✨"
+          label="Multiplier"
+          value={`${data?.streakMultiplier ?? 1}x`}
         />
       </div>
 
       <div style={s.main}>
         <BirthdayCountdown />
 
-        {/* INPUT CARD */}
+        {data?.level && <LevelCard level={data.level} />}
+
         <div style={s.card}>
           {alreadySubmitted ? (
             <AlreadyDone mood={data!.todayMood!} />
@@ -193,11 +239,8 @@ export default function Dashboard() {
             <>
               <h2 style={s.cardTitle}>Gimana hari ini sayaaangku?</h2>
 
-              {/* Emoji display */}
               <div style={{ textAlign: "center", marginBottom: 8 }}>
-                <span
-                  style={{ fontSize: 64, display: "block", lineHeight: 1.2 }}
-                >
+                <span style={{ fontSize: 64, display: "block", lineHeight: 1.2 }}>
                   {EMOJI_MAP[rating]}
                 </span>
                 <span
@@ -211,7 +254,6 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              {/* Slider */}
               <div style={s.sliderWrap}>
                 <input
                   type="range"
@@ -227,7 +269,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Note */}
               <textarea
                 style={s.textarea}
                 placeholder="Cerita dikit dungss mwehehe mau dengar mwaah"
@@ -239,10 +280,7 @@ export default function Dashboard() {
               {error && <p style={s.error}>{error}</p>}
 
               <LoadingButton
-                style={{
-                  ...s.submitBtn,
-                  background: currentColor,
-                }}
+                style={{ ...s.submitBtn, background: currentColor }}
                 onClick={handleSubmit}
                 loading={submitting}
               >
@@ -252,7 +290,18 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* HISTORY */}
+        <MiniGamesSection
+          miniGames={miniGames}
+          completions={completionByGameId}
+          answers={answers}
+          message={miniGameMessage}
+          submittingGameId={submittingGameId}
+          onAnswerChange={(gameId, value) =>
+            setAnswers((current) => ({ ...current, [gameId]: value }))
+          }
+          onComplete={handleMiniGameComplete}
+        />
+
         {(data?.history?.length ?? 0) > 0 && (
           <div style={s.card}>
             <h2 style={s.cardTitle}>7 Hari Terakhir</h2>
@@ -261,10 +310,10 @@ export default function Dashboard() {
                 <div key={m.date} style={s.historyItem}>
                   <span style={{ fontSize: 24 }}>{EMOJI_MAP[m.rating]}</span>
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    {new Date(m.date + "T00:00:00").toLocaleDateString(
-                      "id-ID",
-                      { weekday: "short", day: "numeric" },
-                    )}
+                    {new Date(m.date + "T00:00:00").toLocaleDateString("id-ID", {
+                      weekday: "short",
+                      day: "numeric",
+                    })}
                   </span>
                   <span
                     style={{
@@ -299,16 +348,32 @@ function StatChip({
       <span>{emoji}</span>
       <div>
         <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{label}</div>
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            fontFamily: "Syne, sans-serif",
-          }}
-        >
-          {value}
-        </div>
+        <div style={s.statValue}>{value}</div>
       </div>
+    </div>
+  );
+}
+
+function LevelCard({ level }: { level: LevelProgressData }) {
+  return (
+    <div style={s.card}>
+      <div style={s.levelHeader}>
+        <div>
+          <p style={s.kicker}>Love Level</p>
+          <h2 style={s.levelTitle}>
+            Level {level.currentLevel.levelNumber} - {level.currentLevel.levelName}
+          </h2>
+        </div>
+        <span style={s.levelXP}>{level.totalXP} XP</span>
+      </div>
+      <div style={s.progressTrack}>
+        <div style={{ ...s.progressFill, width: `${level.progressPercent}%` }} />
+      </div>
+      <p style={s.progressText}>
+        {level.nextLevel
+          ? `${level.progressXP}/${level.requiredForNext} XP menuju ${level.nextLevel.levelName}`
+          : "Level maksimum, cintanya sudah endless."}
+      </p>
     </div>
   );
 }
@@ -316,32 +381,21 @@ function StatChip({
 function AlreadyDone({
   mood,
 }: {
-  mood: { rating: number; note: string; streak_day: number };
+  mood: { rating: number; note: string | null; streak_day: number };
 }) {
   return (
     <div style={{ textAlign: "center", padding: "16px 0" }}>
       <span style={{ fontSize: 56 }}>{EMOJI_MAP[mood.rating]}</span>
       <h3 style={{ fontFamily: "Syne, sans-serif", marginTop: 12 }}>
-        YEAAY SUDAH DIRECORD, nanti acuu pantauu yaa sayaangkuu 👍
+        YEAAY sudah direcord, nanti acuu pantauu yaa sayaangkuu 💗
       </h3>
       <p style={{ color: "var(--text-muted)", marginTop: 8, fontSize: 14 }}>
         Mood:{" "}
-        <strong style={{ color: ratingColor(mood.rating) }}>
-          {mood.rating}/10
-        </strong>
+        <strong style={{ color: ratingColor(mood.rating) }}>{mood.rating}/10</strong>
         {mood.streak_day > 1 && ` · 🔥 ${mood.streak_day} hari berturut-turut`}
       </p>
       {mood.note && (
-        <p
-          style={{
-            marginTop: 12,
-            fontSize: 14,
-            color: "var(--text-muted)",
-            fontStyle: "italic",
-          }}
-        >
-          "{mood.note}"
-        </p>
+        <p style={s.notePreview}>&quot;{mood.note}&quot;</p>
       )}
       <p style={{ marginTop: 16, fontSize: 13, color: "var(--text-muted)" }}>
         jangan lupa besok isi lagi yyaa!!! 💕
@@ -352,50 +406,123 @@ function AlreadyDone({
 
 function ResultView({
   result,
-  onReset,
 }: {
-  result: { message: string; streakDay: number; xpEarned: number };
+  result: { message: string; streakDay: number; xpEarned: number; multiplier?: number };
   onReset: () => void;
 }) {
   return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "16px 0",
-        animation: "fadeIn 0.5s ease",
-      }}
-    >
-      <p
-        style={{
-          fontSize: 16,
-          lineHeight: 1.6,
-          color: "var(--text)",
-          marginBottom: 16,
-        }}
-      >
-        {result.message}
-      </p>
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          justifyContent: "center",
-          flexWrap: "wrap",
-        }}
-      >
+    <div style={s.resultView}>
+      <p style={s.resultMessage}>{result.message}</p>
+      <div style={s.resultChips}>
         <span style={s.chip}>+{result.xpEarned} XP</span>
-        {result.streakDay > 1 && (
-          <span style={s.chip}>🔥 {result.streakDay} hari streak</span>
+        {result.multiplier && result.multiplier > 1 && (
+          <span style={s.chip}>{result.multiplier}x streak</span>
         )}
+        {result.streakDay > 1 && <span style={s.chip}>🔥 {result.streakDay} hari streak</span>}
       </div>
     </div>
   );
 }
 
+function MiniGamesSection({
+  miniGames,
+  completions,
+  answers,
+  message,
+  submittingGameId,
+  onAnswerChange,
+  onComplete,
+}: {
+  miniGames: MiniGame[];
+  completions: Record<string, MiniGameCompletionData>;
+  answers: Record<string, string>;
+  message: string;
+  submittingGameId: string | null;
+  onAnswerChange: (gameId: string, value: string) => void;
+  onComplete: (gameId: string) => void;
+}) {
+  return (
+    <div style={s.card}>
+      <h2 style={s.cardTitle}>Mini-game Hari Ini</h2>
+      {message && <p style={s.infoText}>{message}</p>}
+      {miniGames.length === 0 ? (
+        <p style={s.emptyText}>Belum ada mini-game aktif. Nanti admin bisa masukin kejutan kecil di sini.</p>
+      ) : (
+        <div style={s.gameList}>
+          {miniGames.map((game) => {
+            const completion = completions[game.id];
+            const options = Array.isArray(game.options_json)
+              ? game.options_json.filter((item): item is string => typeof item === "string")
+              : [];
+
+            return (
+              <div key={game.id} style={s.gameCard}>
+                <div style={s.gameHeader}>
+                  <div>
+                    <p style={s.kicker}>
+                      {game.type} · {game.difficulty}
+                    </p>
+                    <h3 style={s.gameTitle}>{game.title}</h3>
+                  </div>
+                  <span style={s.gameXP}>+{game.xp_reward} XP</span>
+                </div>
+                {game.description && <p style={s.gameDescription}>{game.description}</p>}
+                {game.prompt && <p style={s.gamePrompt}>{game.prompt}</p>}
+
+                {completion ? (
+                  <p style={s.doneText}>
+                    Selesai · {completion.is_correct ? "benar" : "dicatat"} · +{completion.xp_earned} XP
+                  </p>
+                ) : (
+                  <>
+                    {options.length > 0 ? (
+                      <div style={s.optionGrid}>
+                        {options.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            style={{
+                              ...s.optionBtn,
+                              ...(answers[game.id] === option ? s.optionBtnActive : {}),
+                            }}
+                            onClick={() => onAnswerChange(game.id, option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <textarea
+                        style={s.textarea}
+                        placeholder="Tulis jawaban kecil di sini..."
+                        value={answers[game.id] ?? ""}
+                        onChange={(e) => onAnswerChange(game.id, e.target.value)}
+                        rows={2}
+                      />
+                    )}
+                    <LoadingButton
+                      style={s.secondaryBtn}
+                      loading={submittingGameId === game.id}
+                      onClick={() => onComplete(game.id)}
+                    >
+                      Selesaikan
+                    </LoadingButton>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BirthdayCountdown() {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    setNow(Date.now());
     const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
@@ -403,11 +530,10 @@ function BirthdayCountdown() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const targetTime = new Date("2026-05-25T00:00:00+07:00").getTime();
-  const startTime = new Date("2026-05-08T00:00:00+07:00").getTime();
+  const targetTime = new Date(`${BIRTHDAY_DATE}T00:00:00+07:00`).getTime();
+  const startTime = new Date(`${BIRTHDAY_START_DATE}T00:00:00+07:00`).getTime();
   const totalWindow = targetTime - startTime;
-  const remaining = Math.max(targetTime - now, 0);
-  const isBirthdayReached = remaining === 0;
+  const remaining = now ? Math.max(targetTime - now, 0) : totalWindow;
 
   const days = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
@@ -416,71 +542,26 @@ function BirthdayCountdown() {
 
   async function handleCelebrate() {
     const confetti = (await import("canvas-confetti")).default;
-    const edgeBursts = [
-      {
-        origin: { x: 0.02, y: 0.72 },
-        angle: 18,
-        spread: 58,
-      },
-      {
-        origin: { x: 0.98, y: 0.72 },
-        angle: 162,
-        spread: 58,
-      },
-      {
-        origin: { x: 0.02, y: 0.58 },
-        angle: 28,
-        spread: 44,
-      },
-      {
-        origin: { x: 0.98, y: 0.58 },
-        angle: 152,
-        spread: 44,
-      },
-    ] as const;
-
-    for (const burst of edgeBursts) {
-      confetti({
-        ...burst,
-        particleCount: 95,
-        startVelocity: 52,
-        scalar: 1.05,
-        ticks: 240,
-        gravity: 1.08,
-        decay: 0.915,
-        drift: burst.origin.x < 0.5 ? 0.28 : -0.28,
-        colors: ["#ff4f9a", "#ff86bf", "#ffd3e4", "#ffb7d2", "#fff0f7"],
-        shapes: ["circle", "square"],
-      });
-    }
-
     confetti({
-      particleCount: 24,
-      spread: 38,
-      startVelocity: 20,
-      scalar: 1.45,
-      origin: { x: 0.5, y: 0.45 },
-      angle: 90,
-      ticks: 220,
-      colors: ["#ffffff", "#ffc6dd", "#ff7eb6"],
-      shapes: ["circle"],
-      drift: 0,
-      disableForReducedMotion: true,
+      particleCount: 180,
+      spread: 78,
+      startVelocity: 42,
+      scalar: 1.05,
+      origin: { x: 0.5, y: 0.62 },
+      colors: ["#ff4f9a", "#ff86bf", "#ffd3e4", "#ffb7d2", "#fff0f7"],
     });
   }
 
   return (
     <div style={s.birthdayCard}>
       <div style={s.birthdayGlow} />
-      <h2 style={s.birthdayHeadline}>ULANG TAHUN SAYAAANGKU💝💖</h2>
-
+      <h2 style={s.birthdayHeadline}>ULANG TAHUN SAYAAANGKU 💝💖</h2>
       <div style={s.countdownGrid}>
         <CountdownTile value={String(days).padStart(2, "0")} label="Hari" />
         <CountdownTile value={String(hours).padStart(2, "0")} label="Jam" />
         <CountdownTile value={String(minutes).padStart(2, "0")} label="Menit" />
         <CountdownTile value={String(seconds).padStart(2, "0")} label="Detik" />
       </div>
-
       <div style={s.birthdayActions}>
         <button type="button" style={s.surpriseBtn} onClick={handleCelebrate}>
           Surprise
@@ -499,7 +580,14 @@ function CountdownTile({ value, label }: { value: string; label: string }) {
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
+const s: Record<string, CSSProperties> = {
+  centerPage: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "24px",
+  },
   page: {
     minHeight: "100vh",
     padding: "0 0 80px",
@@ -548,93 +636,14 @@ const s: Record<string, React.CSSProperties> = {
     minWidth: 120,
     flexShrink: 0,
   },
-  birthdayCard: {
-    position: "relative",
-    overflow: "hidden",
-    padding: 22,
-    borderRadius: "calc(var(--radius) + 4px)",
-    border: "1px solid rgba(255, 161, 201, 0.32)",
-    background:
-      "linear-gradient(135deg, rgba(255, 105, 180, 0.16) 0%, rgba(255, 214, 230, 0.1) 48%, rgba(61, 34, 48, 0.96) 100%)",
-    boxShadow: "0 24px 60px rgba(255, 105, 180, 0.14)",
-  },
-  birthdayHeadline: {
-    position: "relative",
-    zIndex: 1,
-    marginBottom: 14,
-    textAlign: "center",
-    fontFamily: "Quicksand, sans-serif",
-    fontSize: 26,
-    lineHeight: 1.15,
-    fontWeight: 700,
-    color: "#fff1f8",
-    letterSpacing: 0.2,
-  },
-  birthdayGlow: {
-    position: "absolute",
-    inset: "auto -30px -60px auto",
-    width: 150,
-    height: 150,
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle, rgba(255, 143, 188, 0.35) 0%, transparent 70%)",
-    filter: "blur(8px)",
-    pointerEvents: "none",
-  },
-  countdownGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-    gap: 10,
-    marginTop: 0,
-  },
-  countdownTile: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    padding: "16px 10px",
-    borderRadius: 16,
-    background: "rgba(255, 241, 247, 0.08)",
-    border: "1px solid rgba(255, 195, 219, 0.18)",
-  },
-  countdownValue: {
-    fontFamily: "Quicksand, sans-serif",
-    fontSize: 34,
-    fontWeight: 800,
-    lineHeight: 1,
-    color: "#fff1f8",
-    letterSpacing: 0.5,
-  },
-  countdownLabel: {
-    fontSize: 12,
-    color: "#f5bfd4",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
-  birthdayActions: {
-    marginTop: 14,
-    display: "flex",
-    gap: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexWrap: "wrap",
-  },
-  surpriseBtn: {
-    border: "none",
-    borderRadius: 999,
-    padding: "12px 20px",
-    background: "linear-gradient(135deg, #ff7eb6 0%, #ffc6dd 100%)",
-    color: "#31111f",
-    fontFamily: "Quicksand, sans-serif",
+  statValue: {
     fontSize: 15,
-    fontWeight: 800,
-    cursor: "pointer",
-    boxShadow: "0 14px 28px rgba(255, 126, 182, 0.28)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    fontWeight: 700,
+    fontFamily: "Syne, sans-serif",
+    whiteSpace: "nowrap",
   },
   main: {
-    maxWidth: 560,
+    maxWidth: 640,
     margin: "0 auto",
     padding: "16px 24px",
     display: "flex",
@@ -654,6 +663,46 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: "Syne, sans-serif",
     fontWeight: 700,
     marginBottom: 20,
+  },
+  kicker: {
+    color: "var(--text-muted)",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  levelHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 16,
+    alignItems: "flex-start",
+  },
+  levelTitle: {
+    fontFamily: "Syne, sans-serif",
+    fontSize: 18,
+    lineHeight: 1.25,
+  },
+  levelXP: {
+    color: "var(--accent)",
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+  },
+  progressTrack: {
+    marginTop: 18,
+    height: 10,
+    borderRadius: 999,
+    background: "var(--surface2)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    background: "linear-gradient(90deg, #ff7eb6, #c8ff57)",
+  },
+  progressText: {
+    marginTop: 10,
+    color: "var(--text-muted)",
+    fontSize: 13,
   },
   ratingBadge: {
     display: "inline-block",
@@ -705,9 +754,30 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     fontSize: 15,
     cursor: "pointer",
-    transition: "opacity 0.2s",
+  },
+  secondaryBtn: {
+    width: "100%",
+    padding: "12px",
+    border: "none",
+    borderRadius: 10,
+    background: "var(--accent)",
+    color: "#210d18",
+    fontFamily: "Syne, sans-serif",
+    fontWeight: 700,
+    fontSize: 14,
+    cursor: "pointer",
   },
   error: { fontSize: 13, color: "var(--red)", marginBottom: 8 },
+  infoText: {
+    color: "var(--accent)",
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  emptyText: {
+    color: "var(--text-muted)",
+    fontSize: 14,
+    lineHeight: 1.5,
+  },
   historyGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(7, 1fr)",
@@ -725,10 +795,175 @@ const s: Record<string, React.CSSProperties> = {
   chip: {
     background: "var(--accent-dim)",
     color: "var(--accent)",
-    border: "1px solid rgba(200,255,87,0.2)",
+    border: "1px solid rgba(229,136,191,0.24)",
     borderRadius: 20,
     padding: "4px 14px",
     fontSize: 13,
     fontWeight: 600,
+  },
+  notePreview: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "var(--text-muted)",
+    fontStyle: "italic",
+  },
+  resultView: {
+    textAlign: "center",
+    padding: "16px 0",
+    animation: "fadeIn 0.5s ease",
+  },
+  resultMessage: {
+    fontSize: 16,
+    lineHeight: 1.6,
+    color: "var(--text)",
+    marginBottom: 16,
+  },
+  resultChips: {
+    display: "flex",
+    gap: 12,
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  gameList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  gameCard: {
+    background: "rgba(255, 241, 247, 0.06)",
+    border: "1px solid rgba(255, 195, 219, 0.16)",
+    borderRadius: 12,
+    padding: 16,
+  },
+  gameHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  gameTitle: {
+    fontFamily: "Syne, sans-serif",
+    fontSize: 15,
+    lineHeight: 1.35,
+  },
+  gameXP: {
+    color: "#c8ff57",
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+  },
+  gameDescription: {
+    color: "var(--text-muted)",
+    fontSize: 13,
+    lineHeight: 1.5,
+    marginTop: 8,
+  },
+  gamePrompt: {
+    fontSize: 14,
+    lineHeight: 1.5,
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  optionGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+    gap: 8,
+    marginBottom: 10,
+  },
+  optionBtn: {
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid var(--border)",
+    background: "var(--surface2)",
+    color: "var(--text)",
+    cursor: "pointer",
+  },
+  optionBtnActive: {
+    borderColor: "var(--accent)",
+    background: "var(--accent-dim)",
+    color: "var(--accent)",
+    fontWeight: 700,
+  },
+  doneText: {
+    marginTop: 12,
+    color: "#c8ff57",
+    fontSize: 13,
+    fontWeight: 700,
+  },
+  birthdayCard: {
+    position: "relative",
+    overflow: "hidden",
+    padding: 22,
+    borderRadius: "calc(var(--radius) + 4px)",
+    border: "1px solid rgba(255, 161, 201, 0.32)",
+    background:
+      "linear-gradient(135deg, rgba(255, 105, 180, 0.16) 0%, rgba(255, 214, 230, 0.1) 48%, rgba(61, 34, 48, 0.96) 100%)",
+    boxShadow: "0 24px 60px rgba(255, 105, 180, 0.14)",
+  },
+  birthdayHeadline: {
+    position: "relative",
+    zIndex: 1,
+    marginBottom: 14,
+    textAlign: "center",
+    fontFamily: "Quicksand, sans-serif",
+    fontSize: 26,
+    lineHeight: 1.15,
+    fontWeight: 700,
+    color: "#fff1f8",
+  },
+  birthdayGlow: {
+    position: "absolute",
+    inset: "auto -30px -60px auto",
+    width: 150,
+    height: 150,
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(255, 143, 188, 0.35) 0%, transparent 70%)",
+    filter: "blur(8px)",
+    pointerEvents: "none",
+  },
+  countdownGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: 10,
+  },
+  countdownTile: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    padding: "16px 10px",
+    borderRadius: 16,
+    background: "rgba(255, 241, 247, 0.08)",
+    border: "1px solid rgba(255, 195, 219, 0.18)",
+  },
+  countdownValue: {
+    fontFamily: "Quicksand, sans-serif",
+    fontSize: 34,
+    fontWeight: 800,
+    lineHeight: 1,
+    color: "#fff1f8",
+  },
+  countdownLabel: {
+    fontSize: 12,
+    color: "#f5bfd4",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  birthdayActions: {
+    marginTop: 14,
+    display: "flex",
+    justifyContent: "center",
+  },
+  surpriseBtn: {
+    border: "none",
+    borderRadius: 999,
+    padding: "12px 20px",
+    background: "linear-gradient(135deg, #ff7eb6 0%, #ffc6dd 100%)",
+    color: "#31111f",
+    fontFamily: "Quicksand, sans-serif",
+    fontSize: 15,
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: "0 14px 28px rgba(255, 126, 182, 0.28)",
   },
 };

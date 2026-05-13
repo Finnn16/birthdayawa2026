@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // Create Supabase server client
     const supabase = createServerClient(

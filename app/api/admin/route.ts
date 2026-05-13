@@ -1,53 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { getTargetUserEmail } from "@/lib/app-config";
+import { getUserProgress } from "@/lib/progress";
+import { requireAdmin } from "@/lib/server-supabase";
 
-const ADMIN_EMAIL = "harfintaufiq@gmail.com";
-const TARGET_EMAIL = "awliyanajwa255@gmail.com";
+export async function GET() {
+  const { supabase, user, error } = await requireAdmin();
 
-export async function GET(req: NextRequest) {
-  const cookieStore = cookies();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set() {},
-        remove() {},
-      },
-    },
-  );
-
-  // Cek auth
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user && error === "Unauthorized") {
+    return NextResponse.json({ error }, { status: 401 });
   }
 
-  // Cek apakah admin
-  if (user.email !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (error === "Forbidden") {
+    return NextResponse.json({ error }, { status: 403 });
   }
+
+  const targetEmail = getTargetUserEmail();
 
   // Ambil user_id target via RPC
   const { data: targetUserId, error: rpcError } = await supabase.rpc(
     "get_user_id_by_email",
     {
-      target_email: TARGET_EMAIL,
+      target_email: targetEmail,
     },
   );
 
   if (rpcError || !targetUserId) {
     return NextResponse.json(
       {
-        error: `Target user tidak ditemukan. Pastikan ${TARGET_EMAIL} sudah daftar.`,
+        error: `Target user tidak ditemukan. Pastikan ${targetEmail} sudah daftar.`,
       },
       { status: 404 },
     );
@@ -71,6 +51,8 @@ export async function GET(req: NextRequest) {
     .eq("id", targetUserId)
     .single();
 
+  const progress = await getUserProgress(supabase, targetUserId);
+
   // Hitung stats
   const ratings = moods?.map((m) => m.rating) ?? [];
   const avgRating = ratings.length
@@ -83,10 +65,12 @@ export async function GET(req: NextRequest) {
     stats: {
       totalDays: moods?.length ?? 0,
       avgRating,
-      currentStreak: moods?.[0]?.streak_day ?? 0,
-      totalXP: moods?.reduce((sum, m) => sum + m.xp_earned, 0) ?? 0,
+      currentStreak: progress.currentStreak,
+      totalXP: progress.totalXP,
       highestRating: ratings.length ? Math.max(...ratings) : 0,
       lowestRating: ratings.length ? Math.min(...ratings) : 0,
+      level: progress.level,
+      streakMultiplier: progress.streakMultiplier,
     },
     userInfo,
   });

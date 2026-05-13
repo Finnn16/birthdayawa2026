@@ -24,6 +24,23 @@ export const CALENDAR_CONFIG = {
   NOTE_PREVIEW_LENGTH: 60,
 } as const;
 
+export type LevelProgressData = {
+  totalXP: number;
+  currentLevel: {
+    levelNumber: number;
+    levelName: string;
+    requiredTotalXP: number;
+  };
+  nextLevel: {
+    levelNumber: number;
+    levelName: string;
+    requiredTotalXP: number;
+  } | null;
+  progressXP: number;
+  requiredForNext: number;
+  progressPercent: number;
+};
+
 // Tipe data umum
 export type Mood = {
   id: string;
@@ -42,6 +59,8 @@ export type Stats = {
   totalXP: number;
   highestRating: number;
   lowestRating: number;
+  streakMultiplier?: number;
+  level?: LevelProgressData;
 };
 
 export type CalendarDay = {

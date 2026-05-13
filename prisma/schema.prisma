@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                         String               @id @db.Uuid
+  username                   String               @unique
+  createdAt                  DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  email                      String?
+  phoneNumber                String?              @map("phone_number")
+  reminderEnabled            Boolean?             @default(true) @map("reminder_enabled")
+  lastMoodReminderSentAt     DateTime?            @map("last_mood_reminder_sent_at") @db.Timestamptz(6)
+  lastMinigameReminderSentAt DateTime?            @map("last_minigame_reminder_sent_at") @db.Timestamptz(6)
+  role                       String?              @default("user")
+  moods                      Mood[]
+  xpTransactions             XpTransaction[]
+  miniGameCompletions        MiniGameCompletion[]
+  miniGamesCreated           MiniGame[]           @relation("MiniGameCreator")
+
+  @@index([phoneNumber])
+  @@map("users")
+}
+
+model Response {
+  id        Int       @id @default(autoincrement())
+  rangeMin  Int       @map("range_min")
+  rangeMax  Int       @map("range_max")
+  message   String
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("responses")
+}
+
+model Mood {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  date      DateTime  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  rating    Int
+  note      String?
+  xpEarned  Int       @default(10) @map("xp_earned")
+  streakDay Int       @default(1) @map("streak_day")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date], map: "moods_user_date_unique")
+  @@index([userId, date(sort: Desc)], map: "moods_user_id_date_idx")
+  @@map("moods")
+}
+
+model XpTransaction {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  sourceType String    @map("source_type")
+  sourceId   String?   @map("source_id") @db.Uuid
+  xpAmount   Int       @map("xp_amount")
+  multiplier Decimal   @default(1) @db.Decimal(4, 2)
+  finalXp    Int       @map("final_xp")
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("xp_transactions")
+}
+
+model LevelConfig {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  levelNumber     Int       @unique @map("level_number")
+  levelName       String    @map("level_name")
+  requiredTotalXp Int       @unique @map("required_total_xp")
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("level_configs")
+}
+
+model MiniGame {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?
+  type        String
+  difficulty  String
+  xpReward    Int                  @map("xp_reward")
+  activeDate  DateTime?            @map("active_date") @db.Date
+  isActive    Boolean              @default(false) @map("is_active")
+  prompt      String?
+  optionsJson Json?                @map("options_json")
+  correctAnswer String?            @map("correct_answer")
+  metadataJson Json?               @map("metadata_json")
+  createdBy   String?              @map("created_by") @db.Uuid
+  createdAt   DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime?            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator     User?                @relation("MiniGameCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  completions MiniGameCompletion[]
+
+  @@index([isActive, activeDate])
+  @@map("mini_games")
+}
+
+model MiniGameCompletion {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  minigameId   String    @map("minigame_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  isCorrect    Boolean   @default(false) @map("is_correct")
+  xpEarned     Int       @default(0) @map("xp_earned")
+  completedAt  DateTime? @default(now()) @map("completed_at") @db.Timestamptz(6)
+  metadataJson Json?     @map("metadata_json")
+  minigame     MiniGame  @relation(fields: [minigameId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([minigameId, userId])
+  @@index([userId, completedAt(sort: Desc)])
+  @@map("mini_game_completions")
+}

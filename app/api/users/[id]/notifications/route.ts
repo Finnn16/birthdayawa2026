@@ -4,9 +4,10 @@ import { cookies } from "next/headers";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const cookieStore = cookies();
+  const { id } = await params;
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,7 +32,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (user.id !== params.id) {
+  if (user.id !== id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
