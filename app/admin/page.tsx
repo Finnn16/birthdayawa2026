@@ -46,6 +46,20 @@ const emptyForm = (): MiniGameFormState => ({
   correct_answer: "",
 });
 
+async function readJsonResponse(res: Response) {
+  const text = await res.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: `Server mengembalikan response non-JSON (${res.status}).`,
+      details: text.slice(0, 180),
+    };
+  }
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { moods, stats, userInfo, loading, error } = useAdminData();
@@ -60,11 +74,19 @@ export default function AdminDashboard() {
 
   const fetchMiniGames = useCallback(async () => {
     setMiniGameLoading(true);
-    const res = await fetch("/api/admin/minigames");
-    const json = await res.json();
-    setMiniGames(json.minigames ?? []);
-    setMiniGameMessage(json.message ?? json.error ?? "");
-    setMiniGameLoading(false);
+    try {
+      const res = await fetch("/api/admin/minigames");
+      const json = await readJsonResponse(res);
+      setMiniGames(json.minigames ?? []);
+      setMiniGameMessage(json.message ?? json.error ?? json.details ?? "");
+    } catch (error) {
+      setMiniGames([]);
+      setMiniGameMessage(
+        error instanceof Error ? error.message : "Gagal memuat mini-game.",
+      );
+    } finally {
+      setMiniGameLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -80,10 +102,10 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    const json = await res.json();
+    const json = await readJsonResponse(res);
 
     if (!res.ok) {
-      setMiniGameMessage(json.error ?? "Gagal membuat mini-game.");
+      setMiniGameMessage(json.details ?? json.error ?? "Gagal membuat mini-game.");
       return;
     }
 
@@ -114,10 +136,10 @@ export default function AdminDashboard() {
         ...patch,
       }),
     });
-    const json = await res.json();
+    const json = await readJsonResponse(res);
 
     if (!res.ok) {
-      setMiniGameMessage(json.error ?? "Gagal update mini-game.");
+      setMiniGameMessage(json.details ?? json.error ?? "Gagal update mini-game.");
       return;
     }
 
