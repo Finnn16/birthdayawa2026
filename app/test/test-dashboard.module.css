@@ -1,744 +1,807 @@
 .page {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(26, 15, 21, 0.86), rgba(26, 15, 21, 1)),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.03) 0 1px,
-      transparent 1px 96px
-    );
+    radial-gradient(circle at top left, rgba(241, 185, 214, 0.16), transparent 34rem),
+    linear-gradient(180deg, #1c1118 0%, #120c10 100%);
   color: var(--text);
-  padding: 24px;
+  padding: 18px;
+  overflow-x: hidden;
+}
+
+.shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
 }
 
 .topbar {
-  width: min(1180px, 100%);
-  margin: 0 auto 20px;
+  min-height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
-.hero h1,
-.hero h2,
-.panel h2 {
+.topbar h1,
+.heroCopy h2,
+.panelHeader h2,
+.sectionHeader h2,
+.featureHeader h3 {
   letter-spacing: 0;
 }
 
-.statusDock {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.statusPill {
-  min-width: 62px;
-  min-height: 50px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.statusPill::after {
-  content: "";
-  position: absolute;
-  inset: -60% auto auto -30%;
-  width: 62px;
-  height: 130px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-  transform: rotate(28deg);
-  animation: statusSweep 4.8s ease-in-out infinite;
-}
-
-.statusPill span {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background:
-    linear-gradient(135deg, rgba(241, 185, 214, 0.38), rgba(119, 215, 185, 0.18)),
-    rgba(241, 185, 214, 0.16);
-  color: #fff2f8;
-  font-size: 17px;
-  font-weight: 900;
+.topbar h1 {
+  font-size: 30px;
   line-height: 1;
-  box-shadow: 0 0 20px rgba(241, 185, 214, 0.16);
-  animation: iconPulse 3.2s ease-in-out infinite;
-  position: relative;
-  z-index: 1;
-}
-
-.statusPill small {
-  color: #dbc2cf;
-  font-size: 12px;
-  font-weight: 900;
-  white-space: nowrap;
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes statusSweep {
-  0%,
-  62% {
-    transform: translateX(0) rotate(28deg);
-    opacity: 0;
-  }
-  76% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(220px) rotate(28deg);
-    opacity: 0;
-  }
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-1px) scale(1.04);
-  }
 }
 
 .eyebrow {
   color: #f1b9d6;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
-.profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-muted);
-  font-weight: 700;
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff5fb;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
 }
 
-.iconButton,
-.ghostButton,
-.primaryButton,
-.questCard button {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  cursor: pointer;
-  font-family: inherit;
+.profileActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profileActions span {
+  color: #d7b8c8;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.progressDock {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 10px;
+  min-width: 0;
+}
+
+.levelStrip,
+.metricCard,
+.heroStrip,
+.todayPanel,
+.exploreSection,
+.featurePanel {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(54, 31, 41, 0.74);
+}
+
+.levelStrip {
+  min-height: 92px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.7fr);
+  align-items: center;
+  gap: 16px;
+  background: rgba(54, 31, 41, 0.62);
+}
+
+.levelContent {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.levelContent span,
+.heroCopy p,
+.heroCopy span,
+.timeCell span,
+.rewardBadge,
+.moodSummary span,
+.questCard p,
+.miniGameCard span,
+.miniGameCard p,
+.featureNote,
+.rewardList small,
+.calendarList time,
+.logList small {
+  color: #d7b8c8;
+}
+
+.levelContent span {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.levelContent strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff5fb;
+  font-size: clamp(24px, 4vw, 34px);
+  line-height: 1;
+}
+
+.levelContent small {
+  color: #d7b8c8;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.iconButton {
-  width: 40px;
-  height: 40px;
+.levelProgress {
+  min-width: 0;
   display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #30262c;
-  color: var(--text);
+  gap: 7px;
 }
 
-.hero {
-  width: min(1180px, 100%);
-  margin: 0 auto 28px;
-  min-height: 360px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-  align-items: stretch;
-  gap: 24px;
-  padding: clamp(22px, 4vw, 42px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(229, 136, 191, 0.22),
-      rgba(87, 184, 255, 0.12)
-    ),
-    linear-gradient(180deg, #2d1820, #20181d);
-  overflow: hidden;
-}
-
-.heroCountdown {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 32px;
-}
-
-.heroCopy {
-  align-self: end;
-  justify-self: end;
-  max-width: 420px;
+.levelProgress small {
+  color: #d7b8c8;
+  font-size: 12px;
+  font-weight: 800;
   text-align: right;
 }
 
-.hero h1 {
-  margin-top: 10px;
-  font-size: clamp(58px, 10vw, 96px);
-  line-height: 0.86;
-  max-width: 760px;
+.levelTrack {
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
 }
 
-.hero h2 {
-  font-size: clamp(24px, 4vw, 42px);
-  line-height: 1;
-  margin-bottom: 12px;
+.levelTrack div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f1b9d6, #77d7b9);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.metricCard {
+  min-height: 92px;
+  padding: 11px 9px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  text-align: center;
+  background: rgba(54, 31, 41, 0.58);
+}
+
+.metricCard span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff5fb;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.metricCard small {
+  color: #d7b8c8;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.metricCard strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #fff5fb;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heroStrip {
+  min-height: 138px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.9fr);
+  align-items: stretch;
+  gap: 12px;
+  background:
+    linear-gradient(135deg, rgba(22, 72, 184, 0.7), rgba(91, 42, 67, 0.55)),
+    rgba(54, 31, 41, 0.74);
+}
+
+.heroCopy {
+  display: grid;
+  align-content: center;
+  gap: 6px;
 }
 
 .heroCopy p {
-  color: #d7b8c8;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
-.countdown {
+.heroCopy h2 {
+  font-size: clamp(42px, 10vw, 72px);
+  line-height: 0.88;
+}
+
+.heroCopy span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.countdownGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(82px, 1fr));
-  gap: 10px;
-  max-width: 500px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.timeBox {
-  min-height: 96px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+.timeCell {
+  min-height: 88px;
   display: grid;
   place-items: center;
-  padding: 10px;
+  padding: 9px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.timeBox strong {
-  font-size: 34px;
+.timeCell strong {
+  font-size: 28px;
   line-height: 1;
 }
 
-.timeBox span {
+.timeCell span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.todayPanel {
+  padding: 14px;
+}
+
+.panelHeader,
+.sectionHeader,
+.featureHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelHeader,
+.sectionHeader {
+  margin-bottom: 12px;
+}
+
+.panelHeader h2,
+.sectionHeader h2 {
+  margin-top: 3px;
+  font-size: 21px;
+}
+
+.sectionHeader span {
   color: #d7b8c8;
   font-size: 12px;
-  font-weight: 700;
-}
-
-.panel {
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(45, 24, 32, 0.72);
-}
-
-.layout {
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1.38fr) minmax(320px, 0.82fr);
-  gap: 22px;
-  align-items: start;
-}
-
-.primaryColumn,
-.sideColumn {
-  display: grid;
-  gap: 22px;
-}
-
-.panel {
-  padding: clamp(18px, 3vw, 26px);
-}
-
-.panelHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.panelHeader h2 {
-  margin-top: 4px;
-  font-size: 22px;
-}
-
-.moodBadge {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(119, 215, 185, 0.14);
-  color: #9debd2;
   font-weight: 900;
   white-space: nowrap;
 }
 
-.moodStage {
-  min-height: 146px;
+.rewardBadge {
+  padding: 7px 9px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background:
-    linear-gradient(
-      135deg,
-      rgba(229, 136, 191, 0.12),
-      rgba(119, 215, 185, 0.09)
-    ),
-    rgba(255, 255, 255, 0.04);
+  background: rgba(119, 215, 185, 0.13);
+  color: #a7f0dc;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  margin-bottom: 12px;
+}
+
+.segmentButton,
+.segmentActive,
+.primaryButton,
+.featureHeader button {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.segmentButton {
+  background: transparent;
+  color: #d7b8c8;
+}
+
+.segmentActive {
+  background: #f1b9d6;
+  color: #25141d;
+}
+
+.taskBody {
+  display: grid;
+  gap: 10px;
+}
+
+.moodSummary {
+  min-height: 78px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
-  padding: 18px;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.moodEmoji {
-  width: 96px;
-  height: 96px;
+.moodNumber {
+  width: 54px;
+  height: 54px;
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  font-size: 52px;
-}
-
-.moodStage strong {
-  display: block;
-  font-size: clamp(42px, 8vw, 74px);
-  line-height: 0.9;
-}
-
-.moodStage span {
-  display: block;
-  color: #f1b9d6;
-  font-size: 18px;
+  background: rgba(119, 215, 185, 0.16);
+  color: #a7f0dc;
+  font-size: 28px;
   font-weight: 900;
-  margin-top: 8px;
 }
 
-.sliderWrap {
-  margin-bottom: 14px;
+.moodSummary strong,
+.moodSummary span {
+  display: block;
+}
+
+.moodSummary span {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .moodSlider {
   --mood-progress: 77%;
   --mood-color: #77d7b9;
   width: 100%;
-  height: 44px;
+  height: 38px;
   appearance: none;
   background: transparent;
   cursor: pointer;
 }
 
 .moodSlider::-webkit-slider-runnable-track {
-  height: 14px;
+  height: 12px;
   border-radius: 999px;
   background: linear-gradient(
     90deg,
     var(--mood-color) 0 var(--mood-progress),
     rgba(255, 255, 255, 0.12) var(--mood-progress) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .moodSlider::-webkit-slider-thumb {
   appearance: none;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  background: #f8d9e8;
+  background: #fff5fb;
   border: 4px solid #2d1820;
-  margin-top: -11px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  margin-top: -9px;
 }
 
 .moodSlider::-moz-range-track {
-  height: 14px;
+  height: 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .moodSlider::-moz-range-progress {
-  height: 14px;
+  height: 12px;
   border-radius: 999px;
   background: var(--mood-color);
 }
 
 .moodSlider::-moz-range-thumb {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
-  background: #f8d9e8;
+  background: #fff5fb;
   border: 4px solid #2d1820;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
 }
 
-.sliderMeta {
-  display: flex;
-  justify-content: space-between;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 900;
-  padding: 0 4px;
-}
-
-.note {
+.note,
+.miniGameCard input {
   width: 100%;
-  resize: vertical;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--text);
-  padding: 14px;
   font: inherit;
 }
 
-.actionRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.actionRow p {
-  color: var(--text-muted);
-  font-weight: 700;
+.note {
+  min-height: 76px;
+  resize: vertical;
+  padding: 12px;
 }
 
 .primaryButton {
-  min-height: 48px;
-  border-radius: 8px;
-  padding: 0 18px;
+  width: 100%;
   background: #77d7b9;
   color: #10231e;
 }
 
-.ghostButton {
-  min-height: 38px;
-  border-radius: 8px;
-  padding: 0 12px;
-  background: transparent;
-  color: #f1b9d6;
-}
-
-.questList,
-.calendarList {
-  display: grid;
-  gap: 10px;
-}
-
-.shopPreview {
-  min-height: 188px;
+.questCard,
+.miniGameCard {
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 18px;
-  display: grid;
-  align-content: center;
-  gap: 12px;
-}
-
-.shopPreview strong {
-  font-size: 28px;
-  line-height: 1;
-}
-
-.shopPreview p {
-  color: #d7b8c8;
-  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .questCard {
-  min-height: 122px;
+  min-height: 82px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.questCard h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
+  gap: 10px;
+  padding: 12px;
 }
 
 .questCard p {
-  color: #dac1ce;
-  line-height: 1.45;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
-.questCard button {
-  min-height: 42px;
-  border-radius: 8px;
-  padding: 0 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text);
+.questCard span {
+  color: #b9ffea;
+  font-size: 12px;
+  font-weight: 900;
   white-space: nowrap;
 }
 
-.soft {
-  background: rgba(229, 136, 191, 0.1);
+.miniGameCard {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.miniGameCard span {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.miniGameCard strong {
+  font-size: 18px;
+}
+
+.miniGameCard p {
+  line-height: 1.4;
+}
+
+.miniGameCard input {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.exploreSection {
+  padding: 14px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.featureRail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.featurePanel {
+  min-height: 248px;
+  min-width: 0;
+  padding: 14px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+  gap: 14px;
+  background:
+    linear-gradient(160deg, var(--feature-glow), transparent 54%),
+    rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+
+.featureHeader {
+  align-items: center;
+}
+
+.featureHeader h3 {
+  font-size: 18px;
+}
+
+.featureHeader button {
+  min-height: 34px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.13);
+  color: #f1b9d6;
+  font-size: 12px;
+}
+
+.mint {
+  --feature-glow: rgba(119, 215, 185, 0.2);
+}
+
+.blue {
+  --feature-glow: rgba(87, 184, 255, 0.18);
+}
+
+.rose {
+  --feature-glow: rgba(241, 185, 214, 0.2);
 }
 
 .gold {
-  background: rgba(243, 201, 105, 0.1);
+  --feature-glow: rgba(243, 201, 105, 0.17);
 }
 
-.calendarRow {
+.rewardHero {
+  min-height: 82px;
   display: grid;
-  gap: 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 13px;
-}
-
-.calendarRow div {
-  display: grid;
+  align-content: center;
   gap: 4px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(119, 215, 185, 0.13);
+  border: 1px solid rgba(119, 215, 185, 0.24);
 }
 
-.calendarRow strong {
-  font-size: 14px;
-}
-
-.calendarRow span,
-.calendarRow time {
-  color: var(--text-muted);
+.rewardHero span {
+  color: #d7b8c8;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
-.gardenGrid {
+.rewardHero strong {
+  color: #b9ffea;
+  font-size: 42px;
+  line-height: 0.9;
+}
+
+.rewardList,
+.calendarList,
+.logList {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
-.gardenTile {
+.rewardList span,
+.calendarList span,
+.logList span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rewardList strong,
+.calendarList strong,
+.logList strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.rewardList small,
+.calendarList time {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.featureNote {
+  margin-top: auto;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gardenPlot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.gardenPlot span {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(119, 215, 185, 0.16),
-      rgba(87, 184, 255, 0.08)
-    ),
-    rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(119, 215, 185, 0.18);
-  color: #b8ffe9;
-  font-weight: 900;
-  font-size: 22px;
-}
-
-.calendarRow {
-  grid-template-columns: 72px minmax(0, 1fr);
-  align-items: center;
-}
-
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(10, 6, 9, 0.72);
-  display: grid;
-  place-items: center;
-  padding: 18px;
-}
-
-.rewardModal {
-  width: min(640px, 100%);
-  max-height: min(760px, calc(100vh - 36px));
-  overflow: auto;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: #24151c;
-  padding: clamp(18px, 3vw, 26px);
-  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.42);
-}
-
-.modalHeader,
-.modalActions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-}
-
-.modalHeader {
-  margin-bottom: 18px;
-}
-
-.modalHeader h2 {
-  margin-top: 4px;
-  font-size: 28px;
-}
-
-.rewardPicker {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.rewardOption,
-.rewardOptionActive {
-  width: 100%;
-  min-height: 76px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  padding: 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.rewardOptionActive {
-  border-color: rgba(119, 215, 185, 0.6);
   background: rgba(119, 215, 185, 0.12);
-}
-
-.rewardOption span,
-.rewardOptionActive span {
-  display: grid;
-  gap: 5px;
-}
-
-.rewardOption strong,
-.rewardOptionActive strong {
-  font-size: 15px;
-}
-
-.rewardOption small,
-.rewardOptionActive small,
-.rewardOption em,
-.rewardOptionActive em,
-.modalActions p {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-style: normal;
+  border: 1px solid rgba(119, 215, 185, 0.2);
+  color: #b9ffea;
   font-weight: 900;
 }
 
-.reasonField {
-  display: grid;
-  gap: 8px;
-  color: #f1b9d6;
-  font-size: 13px;
-  font-weight: 900;
+.logList {
+  align-content: start;
 }
 
-.reasonField textarea {
-  width: 100%;
-  resize: vertical;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
-  padding: 14px;
-  font: inherit;
-}
-
-.modalActions {
-  margin-top: 16px;
-}
-
-@media (max-width: 920px) {
-  .page {
-    padding: 18px;
+@media (min-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+    align-items: start;
   }
 
-  .hero,
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .countdown {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-width: none;
-  }
-
-  .heroCopy {
-    justify-self: start;
-    text-align: left;
-    max-width: 560px;
-  }
-}
-
-@media (max-width: 640px) {
   .topbar,
-  .panelHeader,
-  .actionRow,
-  .questCard,
-  .modalHeader,
-  .modalActions {
-    align-items: stretch;
-    grid-template-columns: 1fr;
-    flex-direction: column;
+  .progressDock,
+  .heroStrip {
+    grid-column: 1 / -1;
+  }
+
+  .featureRail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 12px;
+  }
+
+  .shell {
+    gap: 10px;
   }
 
   .topbar {
-    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: -12px -12px 0;
+    padding: 12px;
+    background: rgba(28, 17, 24, 0.92);
+    backdrop-filter: blur(14px);
   }
 
-  .statusDock {
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .progressDock {
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
-  .statusPill {
-    min-width: 0;
-    min-height: 54px;
+  .levelStrip {
     grid-template-columns: 1fr;
-    justify-items: center;
+    min-height: 104px;
+    padding: 12px;
+  }
+
+  .levelContent strong {
+    font-size: clamp(28px, 9vw, 38px);
+  }
+
+  .levelProgress small {
+    text-align: left;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .metricCard {
+    min-height: 76px;
     gap: 5px;
-    padding: 8px 6px;
+    padding: 9px 6px;
   }
 
-  .statusPill small {
-    font-size: 11px;
+  .metricCard span {
+    width: 28px;
+    height: 28px;
+    font-size: 9px;
+  }
+
+  .metricCard strong {
+    font-size: 13px;
+  }
+
+  .heroStrip {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .heroCopy h2 {
+    font-size: clamp(44px, 16vw, 64px);
+  }
+
+  .timeCell {
+    min-height: 62px;
+    padding: 7px 4px;
+  }
+
+  .timeCell strong {
+    font-size: 23px;
+  }
+
+  .todayPanel {
+    padding: 12px;
+  }
+
+  .panelHeader {
+    align-items: center;
+  }
+
+  .rewardBadge {
+    display: none;
+  }
+
+  .exploreSection {
+    padding: 12px;
+  }
+
+  .sectionHeader {
+    align-items: center;
+  }
+
+  .featureRail {
+    display: flex;
+    gap: 10px;
+    width: 100%;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
   }
 
-  .moodStage {
+  .featureRail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .featurePanel {
+    flex: 0 0 min(82vw, 330px);
+    min-height: 238px;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 420px) {
+  .questCard {
     grid-template-columns: 1fr;
-    text-align: center;
-    justify-items: center;
   }
 
-  .countdown {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero {
-    min-height: 460px;
-  }
-
-  .hero h1 {
-    font-size: clamp(58px, 22vw, 94px);
-  }
-
-  .rewardOption,
-  .rewardOptionActive {
-    grid-template-columns: 1fr;
+  .questCard span {
+    white-space: normal;
   }
 }

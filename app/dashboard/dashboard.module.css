@@ -9,6 +9,7 @@
     );
   color: var(--text);
   padding: 24px;
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -273,6 +274,61 @@
 .sideColumn {
   display: grid;
   gap: 22px;
+  min-width: 0;
+}
+
+.todayPanel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rewardBadge {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(119, 215, 185, 0.14);
+  color: #9debd2;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.segmentButton,
+.segmentActive {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+}
+
+.segmentButton {
+  background: transparent;
+  color: #d7b8c8;
+}
+
+.segmentActive {
+  background: #f1b9d6;
+  color: #25141d;
+}
+
+.taskPane {
+  display: none;
+}
+
+.taskPaneActive {
+  display: block;
+  min-width: 0;
 }
 
 .panel {
@@ -751,15 +807,77 @@
   }
 
   .countdown {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
   }
 
   .hero {
-    min-height: 460px;
+    min-height: auto;
+    gap: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
   }
 
   .hero h1 {
-    font-size: clamp(58px, 22vw, 46px);
+    font-size: clamp(42px, 15vw, 64px);
+  }
+
+  .countdownTitle {
+    font-size: clamp(18px, 6vw, 26px);
+  }
+
+  .countdownMeta {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  .heroCopy h2 {
+    font-size: 22px;
+  }
+
+  .heroCopy p {
+    font-size: 13px;
+  }
+
+  .timeBox {
+    min-height: 64px;
+    padding: 7px 4px;
+  }
+
+  .timeBox strong {
+    font-size: 23px;
+  }
+
+  .todayPanel {
+    gap: 10px;
+  }
+
+  .rewardBadge {
+    display: none;
+  }
+
+  .segmented {
+    background: rgba(39, 22, 30, 0.94);
+  }
+
+  .sideColumn {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .sideColumn::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sideColumn > .panel {
+    flex: 0 0 min(84vw, 340px);
+    min-height: 238px;
+    scroll-snap-align: start;
   }
 
   .rewardOption,

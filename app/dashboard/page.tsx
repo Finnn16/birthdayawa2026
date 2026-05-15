@@ -166,6 +166,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [activeTask, setActiveTask] = useState<"mood" | "quest" | "minigame">(
+    "mood",
+  );
   const [result, setResult] = useState<{
     message: string;
     streakDay: number;
@@ -484,78 +487,93 @@ export default function Dashboard() {
 
       <section className={styles.layout}>
         <div className={styles.primaryColumn}>
-          <MoodPanel
-            alreadySubmitted={alreadySubmitted}
-            todayMood={data?.todayMood ?? null}
-            result={result}
-            rating={rating}
-            note={note}
-            currentColor={currentColor}
-            error={error}
-            submitting={submitting}
-            rewardPreview={nextMoodXpPreview}
-            onRatingChange={setRating}
-            onNoteChange={setNote}
-            onSubmit={handleSubmit}
-          />
-
-          <DailyQuestSection
-            data={engagement}
-            message={engagementMessage}
-            questAnswers={questAnswers}
-            onQuestAnswerChange={(id, value) =>
-              setQuestAnswers((current) => ({ ...current, [id]: value }))
-            }
-            onQuestComplete={handleQuestComplete}
-          />
-
-          <MiniGamesSection
-            miniGames={miniGames}
-            completions={completionByGameId}
-            answers={answers}
-            message={miniGameMessage}
-            submittingGameId={submittingGameId}
-            onAnswerChange={(gameId, value) =>
-              setAnswers((current) => ({ ...current, [gameId]: value }))
-            }
-            onComplete={handleMiniGameComplete}
-          />
-
-          {(data?.history?.length ?? 0) > 0 && (
-            <div className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <div>
-                  <p className={styles.eyebrow}>History</p>
-                  <h2>7 Hari Terakhir</h2>
-                </div>
+          <section className={styles.todayPanel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <p className={styles.eyebrow}>Daily hub</p>
+                <h2>Satu fokus dulu</h2>
               </div>
-              <div style={s.historyGrid}>
-                {data!.history.map((m) => (
-                  <div key={m.date} style={s.historyItem}>
-                    <span style={{ fontSize: 24 }}>{EMOJI_MAP[m.rating]}</span>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      {new Date(m.date + "T00:00:00").toLocaleDateString(
-                        "id-ID",
-                        {
-                          weekday: "short",
-                          day: "numeric",
-                        },
-                      )}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: ratingColor(m.rating),
-                      }}
-                    >
-                      {m.rating}/10
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <span className={styles.rewardBadge}>
+                +{nextMoodXpPreview} XP ready
+              </span>
             </div>
-          )}
+
+            <div className={styles.segmented} aria-label="Pilih aktivitas">
+              <TaskButton
+                active={activeTask === "mood"}
+                label="Mood"
+                onClick={() => setActiveTask("mood")}
+              />
+              <TaskButton
+                active={activeTask === "quest"}
+                label="Quest"
+                onClick={() => setActiveTask("quest")}
+              />
+              <TaskButton
+                active={activeTask === "minigame"}
+                label="Mini-game"
+                onClick={() => setActiveTask("minigame")}
+              />
+            </div>
+
+            <div
+              className={
+                activeTask === "mood" ? styles.taskPaneActive : styles.taskPane
+              }
+            >
+              <MoodPanel
+                alreadySubmitted={alreadySubmitted}
+                todayMood={data?.todayMood ?? null}
+                result={result}
+                rating={rating}
+                note={note}
+                currentColor={currentColor}
+                error={error}
+                submitting={submitting}
+                rewardPreview={nextMoodXpPreview}
+                onRatingChange={setRating}
+                onNoteChange={setNote}
+                onSubmit={handleSubmit}
+              />
+            </div>
+
+            <div
+              className={
+                activeTask === "quest" ? styles.taskPaneActive : styles.taskPane
+              }
+            >
+              <DailyQuestSection
+                data={engagement}
+                message={engagementMessage}
+                questAnswers={questAnswers}
+                onQuestAnswerChange={(id, value) =>
+                  setQuestAnswers((current) => ({ ...current, [id]: value }))
+                }
+                onQuestComplete={handleQuestComplete}
+              />
+            </div>
+
+            <div
+              className={
+                activeTask === "minigame"
+                  ? styles.taskPaneActive
+                  : styles.taskPane
+              }
+            >
+              <MiniGamesSection
+                miniGames={miniGames}
+                completions={completionByGameId}
+                answers={answers}
+                message={miniGameMessage}
+                submittingGameId={submittingGameId}
+                onAnswerChange={(gameId, value) =>
+                  setAnswers((current) => ({ ...current, [gameId]: value }))
+                }
+                onComplete={handleMiniGameComplete}
+              />
+            </div>
+          </section>
+
         </div>
 
         <aside className={styles.sideColumn}>
@@ -574,6 +592,9 @@ export default function Dashboard() {
             onUseProtection={handleUseProtection}
           />
           <CalendarSection data={engagement} />
+          {(data?.history?.length ?? 0) > 0 && (
+            <HistoryPanel history={data!.history} />
+          )}
         </aside>
       </section>
 
@@ -611,6 +632,26 @@ function StatusPill({
       <span aria-hidden="true">{icon}</span>
       <small>{value}</small>
     </div>
+  );
+}
+
+function TaskButton({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={active ? styles.segmentActive : styles.segmentButton}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -1015,6 +1056,41 @@ function CalendarSection({ data }: { data: EngagementData }) {
           ))}
         </div>
       )}
+    </section>
+  );
+}
+
+function HistoryPanel({ history }: { history: DashboardData["history"] }) {
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p className={styles.eyebrow}>History</p>
+          <h2>7 Hari Terakhir</h2>
+        </div>
+      </div>
+      <div style={s.historyGrid}>
+        {history.map((m) => (
+          <div key={m.date} style={s.historyItem}>
+            <span style={{ fontSize: 24 }}>{EMOJI_MAP[m.rating]}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              {new Date(m.date + "T00:00:00").toLocaleDateString("id-ID", {
+                weekday: "short",
+                day: "numeric",
+              })}
+            </span>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: ratingColor(m.rating),
+              }}
+            >
+              {m.rating}/10
+            </span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

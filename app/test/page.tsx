@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
+import type { ReactNode } from "react";
 import styles from "./test-dashboard.module.css";
 
 const moodLabels = [
@@ -17,125 +18,147 @@ const moodLabels = [
   "Full love",
 ];
 
-const moodEmoji = ["😔", "🥺", "😐", "🙂", "😊", "🥰", "🤭", "😌", "✨", "💖"];
+const metrics = [
+  { label: "XP", value: "340/540", icon: "XP" },
+  { label: "Streak", value: "14 hari", icon: "ST" },
+  { label: "Hearts", value: "186", icon: "HT" },
+];
+
+const countdown = [
+  { value: "09", label: "Hari" },
+  { value: "12", label: "Jam" },
+  { value: "55", label: "Menit" },
+  { value: "13", label: "Detik" },
+];
 
 const quests = [
   {
     title: "Tiny reflection",
     prompt: "Apa satu hal kecil yang bikin hari ini terasa lebih baik?",
     reward: "+12 Hearts",
-    tone: "soft",
   },
   {
     title: "Memory spark",
     prompt: "Pilih momen yang paling kamu ingat dari minggu ini.",
     reward: "+20 XP",
-    tone: "gold",
   },
 ];
 
 const rewards = [
-  { title: "Voice note penyemangat", cost: "45 Hearts", status: "Ready" },
-  {
-    title: "Request surat panjang",
-    cost: "120 Hearts",
-    status: "Pending approval",
-  },
-  { title: "Streak Shield", cost: "90 Hearts", status: "Locked" },
-];
-
-const garden = [
-  "sprout",
-  "bloom",
-  "tree",
-  "cloud",
-  "bloom",
-  "spark",
-  "sprout",
-  "tree",
+  { title: "Voice note", meta: "45 Hearts" },
+  { title: "Surat panjang", meta: "120 Hearts" },
+  { title: "Streak Shield", meta: "90 Hearts" },
 ];
 
 const calendar = [
-  { date: "13 Mei", title: "Daily quest aktif", meta: "Hari ini" },
-  { date: "18 Mei", title: "Movie night request", meta: "Reward" },
-  { date: "25 Mei", title: "Birthday countdown", meta: "Special" },
+  { date: "18 Mei", title: "Movie night request" },
+  { date: "25 Mei", title: "Ulang Tahun Awa" },
 ];
 
+type TaskTab = "mood" | "quest" | "minigame";
+
 export default function TestDashboardPage() {
+  const [activeTask, setActiveTask] = useState<TaskTab>("mood");
   const [mood, setMood] = useState(8);
   const [note, setNote] = useState("");
-  const [shopOpen, setShopOpen] = useState(false);
-  const [selectedReward, setSelectedReward] = useState(rewards[0]);
-  const [rewardReason, setRewardReason] = useState("");
 
   const moodLabel = useMemo(() => moodLabels[mood - 1] ?? "Hangat", [mood]);
-  const currentEmoji = moodEmoji[mood - 1] ?? "😊";
   const moodColor = mood <= 3 ? "#ff7c76" : mood <= 6 ? "#f3c969" : "#77d7b9";
-  const rewardPreview = "+35 XP";
 
   return (
     <main className={styles.page}>
-      <header className={styles.topbar}>
-        <div className={styles.statusDock} aria-label="Progress ringkas">
-          <StatusPill icon="💞" label="Level" value="Warm Hug" />
-          <StatusPill icon="⚡" label="XP" value="340/540" />
-          <StatusPill icon="🔥" label="Streak" value="14" />
-          <StatusPill icon="✨" label="Multiplier" value="7x" />
-        </div>
-        <div className={styles.profile}>
-          <span>@Awa</span>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Logout"
-          >
-            L
-          </button>
-        </div>
-      </header>
-
-      <section className={styles.hero}>
-        <div className={styles.heroCountdown}>
-          <p className={styles.eyebrow}>Birthday countdown</p>
-          <h1>12 hari lagi</h1>
-          <div className={styles.countdown} aria-label="Birthday countdown">
-            <TimeBox value="12" label="Hari" />
-            <TimeBox value="08" label="Jam" />
-            <TimeBox value="24" label="Menit" />
-            <TimeBox value="16" label="Detik" />
+      <div className={styles.shell}>
+        <header className={styles.topbar}>
+          <div>
+            <p className={styles.eyebrow}>BirthdayAwa</p>
+            <h1>Hari ini</h1>
           </div>
-        </div>
-        <div className={styles.heroCopy}>
-          <h2>Jaga mood, kumpulin Hearts, dan rawat garden pelan-pelan.</h2>
-          <p>
-            Hari ini cukup isi mood dulu. Quest dan reward bisa menyusul
-            setelahnya.
-          </p>
-        </div>
-      </section>
+          <div className={styles.profileActions}>
+            <span>@Awa</span>
+            <button type="button" className={styles.avatar} aria-label="Profil Awa">
+              A
+            </button>
+          </div>
+        </header>
 
-      <section className={styles.layout}>
-        <div className={styles.primaryColumn}>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Mood check-in</p>
-                <h2>Gimana hari ini?</h2>
-              </div>
-              <span className={styles.moodBadge}>{moodLabel}</span>
+        <section className={styles.progressDock} aria-label="Progress ringkas">
+          <article className={styles.levelStrip}>
+            <div className={styles.levelContent}>
+              <span>Love level</span>
+              <strong>Warm Hug</strong>
+              <small>340 / 540 XP</small>
             </div>
-
-            <div className={styles.moodStage}>
-              <div className={styles.moodEmoji} aria-hidden="true">
-                {currentEmoji}
+            <div className={styles.levelProgress}>
+              <div className={styles.levelTrack} aria-hidden="true">
+                <div style={{ width: "63%" }} />
               </div>
-              <div>
-                <strong>{mood}/10</strong>
-                <span>{moodLabel}</span>
-              </div>
+              <small>200 XP lagi</small>
             </div>
+          </article>
 
-            <div className={styles.sliderWrap}>
+          <div className={styles.metricsGrid}>
+            {metrics.map((item) => (
+              <article key={item.label} className={styles.metricCard}>
+                <span aria-hidden="true">{item.icon}</span>
+                <small>{item.label}</small>
+                <strong>{item.value}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.heroStrip}>
+          <div className={styles.heroCopy}>
+            <p>Birthday countdown</p>
+            <h2>9 hari lagi</h2>
+            <span>Ulang Tahun Awa - 25 Mei 2026</span>
+          </div>
+          <div className={styles.countdownGrid} aria-label="Birthday countdown">
+            {countdown.map((item) => (
+              <div key={item.label} className={styles.timeCell}>
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.todayPanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.eyebrow}>Daily hub</p>
+              <h2>Satu fokus dulu</h2>
+            </div>
+            <span className={styles.rewardBadge}>+35 XP ready</span>
+          </div>
+
+          <div className={styles.segmented} aria-label="Pilih aktivitas">
+            <TaskButton
+              active={activeTask === "mood"}
+              label="Mood"
+              onClick={() => setActiveTask("mood")}
+            />
+            <TaskButton
+              active={activeTask === "quest"}
+              label="Quest"
+              onClick={() => setActiveTask("quest")}
+            />
+            <TaskButton
+              active={activeTask === "minigame"}
+              label="Mini-game"
+              onClick={() => setActiveTask("minigame")}
+            />
+          </div>
+
+          {activeTask === "mood" && (
+            <div className={styles.taskBody}>
+              <div className={styles.moodSummary}>
+                <div className={styles.moodNumber}>{mood}</div>
+                <div>
+                  <strong>{moodLabel}</strong>
+                  <span>Isi mood harian tanpa buka halaman panjang.</span>
+                </div>
+              </div>
               <input
                 className={styles.moodSlider}
                 type="range"
@@ -152,224 +175,163 @@ export default function TestDashboardPage() {
                 }
                 aria-label="Pilih mood hari ini"
               />
-              <div className={styles.sliderMeta}>
-                <span>1</span>
-                <span>5</span>
-                <span>10</span>
-              </div>
-            </div>
-
-            <textarea
-              className={styles.note}
-              placeholder="Tulis sedikit cerita hari ini..."
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              rows={4}
-            />
-
-            <div className={styles.actionRow}>
+              <textarea
+                className={styles.note}
+                placeholder="Catatan singkat hari ini..."
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                rows={3}
+              />
               <button type="button" className={styles.primaryButton}>
-                Simpan Mood
-              </button>
-              <p>Reward streak: {rewardPreview}</p>
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Daily quest</p>
-                <h2>Quest hari ini</h2>
-              </div>
-              <button type="button" className={styles.ghostButton}>
-                Lihat semua
+                Simpan mood
               </button>
             </div>
+          )}
 
-            <div className={styles.questList}>
+          {activeTask === "quest" && (
+            <div className={styles.taskBody}>
               {quests.map((quest) => (
-                <article
-                  key={quest.title}
-                  className={`${styles.questCard} ${styles[quest.tone]}`}
-                >
+                <article key={quest.title} className={styles.questCard}>
                   <div>
-                    <h3>{quest.title}</h3>
+                    <strong>{quest.title}</strong>
                     <p>{quest.prompt}</p>
                   </div>
-                  <button type="button">{quest.reward}</button>
+                  <span>{quest.reward}</span>
                 </article>
               ))}
-            </div>
-          </section>
-        </div>
-
-        <aside className={styles.sideColumn}>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Reward shop</p>
-                <h2>Request reward</h2>
-              </div>
-            </div>
-            <div className={styles.shopPreview}>
-              <strong>186 Hearts tersedia</strong>
-              <p>Pilih reward lewat popup supaya dashboard tetap lega.</p>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => setShopOpen(true)}
-              >
-                Buka Reward Shop
+              <button type="button" className={styles.primaryButton}>
+                Kerjakan quest
               </button>
             </div>
-          </section>
+          )}
 
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Mood garden</p>
-                <h2>Garden preview</h2>
-              </div>
-            </div>
-            <div className={styles.gardenGrid}>
-              {garden.map((item, index) => (
-                <div key={`${item}-${index}`} className={styles.gardenTile}>
-                  {gardenIcon(item)}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Couple calendar</p>
-                <h2>Agenda dekat</h2>
-              </div>
-            </div>
-            <div className={styles.calendarList}>
-              {calendar.map((event) => (
-                <div key={event.title} className={styles.calendarRow}>
-                  <time>{event.date}</time>
-                  <div>
-                    <strong>{event.title}</strong>
-                    <span>{event.meta}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </section>
-
-      {shopOpen && (
-        <div
-          className={styles.modalOverlay}
-          role="presentation"
-          onMouseDown={() => setShopOpen(false)}
-        >
-          <section
-            className={styles.rewardModal}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="reward-shop-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <div>
-                <p className={styles.eyebrow}>Reward shop</p>
-                <h2 id="reward-shop-title">Tukar Hearts</h2>
-              </div>
-              <button
-                type="button"
-                className={styles.iconButton}
-                onClick={() => setShopOpen(false)}
-                aria-label="Tutup"
-              >
-                X
+          {activeTask === "minigame" && (
+            <div className={styles.taskBody}>
+              <article className={styles.miniGameCard}>
+                <span>Guess the date - Medium</span>
+                <strong>Tebak tanggal date</strong>
+                <p>Tanggal berapa kita date di Miko Mall?</p>
+                <input type="text" placeholder="Contoh: 12-01-2022" />
+              </article>
+              <button type="button" className={styles.primaryButton}>
+                Jawab mini-game
               </button>
             </div>
+          )}
+        </section>
 
-            <div className={styles.rewardPicker}>
-              {rewards.map((reward) => (
-                <button
-                  key={reward.title}
-                  type="button"
-                  className={
-                    selectedReward.title === reward.title
-                      ? styles.rewardOptionActive
-                      : styles.rewardOption
-                  }
-                  onClick={() => setSelectedReward(reward)}
-                >
-                  <span>
+        <section className={styles.exploreSection} aria-label="Eksplorasi lain">
+          <div className={styles.sectionHeader}>
+            <div>
+              <p className={styles.eyebrow}>Explore</p>
+              <h2>Yang bisa dicek nanti</h2>
+            </div>
+            <span>Swipe di mobile</span>
+          </div>
+
+          <div className={styles.featureRail}>
+            <FeaturePanel title="Reward shop" action="Buka shop" tone="mint">
+              <div className={styles.rewardHero}>
+                <span>Hearts tersedia</span>
+                <strong>186</strong>
+              </div>
+              <div className={styles.rewardList}>
+                {rewards.map((reward) => (
+                  <span key={reward.title}>
                     <strong>{reward.title}</strong>
-                    <small>{reward.status}</small>
+                    <small>{reward.meta}</small>
                   </span>
-                  <em>{reward.cost}</em>
-                </button>
-              ))}
-            </div>
+                ))}
+              </div>
+            </FeaturePanel>
 
-            <label className={styles.reasonField}>
-              <span>Reason optional</span>
-              <textarea
-                value={rewardReason}
-                onChange={(event) => setRewardReason(event.target.value)}
-                rows={4}
-                placeholder="Kenapa mau reward ini hari ini?"
-              />
-            </label>
-
-            <div className={styles.modalActions}>
-              <p>
-                Dipilih: <strong>{selectedReward.title}</strong>
+            <FeaturePanel title="Couple calendar" action="Detail" tone="blue">
+              <div className={styles.calendarList}>
+                {calendar.map((event) => (
+                  <span key={event.title}>
+                    <time>{event.date}</time>
+                    <strong>{event.title}</strong>
+                  </span>
+                ))}
+              </div>
+              <p className={styles.featureNote}>
+                Event terdekat jadi sumber countdown, quest harian tidak masuk
+                ke sini.
               </p>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => setShopOpen(false)}
-              >
-                Request Reward
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+            </FeaturePanel>
+
+            <FeaturePanel title="Mood garden" action="Rawat" tone="rose">
+              <div className={styles.gardenPlot}>
+                <span>S</span>
+                <span>B</span>
+                <span>T</span>
+                <span>*</span>
+                <span>B</span>
+                <span>S</span>
+              </div>
+              <p className={styles.featureNote}>
+                Garden tumbuh dari mood check-in, jadi progressnya terasa
+                pelan tapi konsisten.
+              </p>
+            </FeaturePanel>
+
+            <FeaturePanel title="Love log" action="Lihat log" tone="gold">
+              <div className={styles.logList}>
+                <span>
+                  <strong>Hari ini</strong>
+                  <small>Mood check-in siap diisi</small>
+                </span>
+                <span>
+                  <strong>Minggu ini</strong>
+                  <small>3 aktivitas selesai, streak aman</small>
+                </span>
+              </div>
+            </FeaturePanel>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
 
-function StatusPill({
-  icon,
+function TaskButton({
+  active,
   label,
-  value,
+  onClick,
 }: {
-  icon: string;
+  active: boolean;
   label: string;
-  value: string;
+  onClick: () => void;
 }) {
   return (
-    <div className={styles.statusPill} title={`${label}: ${value}`}>
-      <span aria-hidden="true">{icon}</span>
-      <small>{value}</small>
-    </div>
+    <button
+      type="button"
+      className={active ? styles.segmentActive : styles.segmentButton}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }
 
-function TimeBox({ value, label }: { value: string; label: string }) {
+function FeaturePanel({
+  title,
+  action,
+  tone,
+  children,
+}: {
+  title: string;
+  action: string;
+  tone: "mint" | "blue" | "rose" | "gold";
+  children: ReactNode;
+}) {
   return (
-    <div className={styles.timeBox}>
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
+    <article className={`${styles.featurePanel} ${styles[tone]}`}>
+      <div className={styles.featureHeader}>
+        <h3>{title}</h3>
+        <button type="button">{action}</button>
+      </div>
+      {children}
+    </article>
   );
-}
-
-function gardenIcon(item: string) {
-  if (item === "cloud") return "C";
-  if (item === "tree") return "T";
-  if (item === "spark") return "*";
-  if (item === "bloom") return "B";
-  return "S";
 }
