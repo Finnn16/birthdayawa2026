@@ -12,17 +12,27 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
     if (!payload.quest_id) return NextResponse.json({ error: "quest_id wajib diisi." }, { status: 400 });
     const { data: assigner } = await db.from("users").select("id").eq("id", user.id).maybeSingle();
+    const activeDate =
+      typeof payload.active_date === "string" ? payload.active_date : getTodayDateString();
     const { data, error: insertError } = await db
       .from("daily_quest_assignments")
       .insert({
         quest_id: payload.quest_id,
-        active_date: typeof payload.active_date === "string" ? payload.active_date : getTodayDateString(),
+        active_date: activeDate,
         is_active: payload.is_active !== false,
         assigned_by: assigner?.id ?? null,
       })
       .select()
       .single();
-    if (insertError) return NextResponse.json({ error: "Gagal assign quest.", details: insertError.message }, { status: 500 });
+    if (insertError) {
+      if (insertError.code === "23505") {
+        return NextResponse.json(
+          { error: "Quest ini sudah diassign untuk tanggal tersebut." },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Gagal assign quest.", details: insertError.message }, { status: 500 });
+    }
     return NextResponse.json({ assignment: data }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Gagal assign quest.", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });

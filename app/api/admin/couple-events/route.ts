@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { normalizeCoupleEventType } from "@/lib/couple-events";
 import { getTodayDateString } from "@/lib/date";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
         title: payload.title.trim(),
         description: typeof payload.description === "string" ? payload.description.trim() : null,
         event_date: typeof payload.event_date === "string" ? payload.event_date : getTodayDateString(),
-        event_type: typeof payload.event_type === "string" ? payload.event_type : "custom",
+        event_type: normalizeCoupleEventType(payload.event_type),
         visibility: typeof payload.visibility === "string" ? payload.visibility : "both",
         is_special: Boolean(payload.is_special),
         is_active: payload.is_active !== false,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getTodayDateString } from "@/lib/date";
 import { createServiceRoleClient, getAuthenticatedUser } from "@/lib/server-supabase";
 
 export async function GET() {
@@ -7,13 +8,15 @@ export async function GET() {
 
   try {
     const db = createServiceRoleClient();
-    const [customEvents, moods, quests, rewards] = await Promise.all([
+    const today = getTodayDateString();
+    const [customEvents, moods] = await Promise.all([
       db
         .from("couple_events")
         .select("*")
         .eq("is_active", true)
         .in("visibility", ["user", "both"])
-        .order("event_date", { ascending: false })
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
         .limit(40),
       db
         .from("moods")
@@ -21,25 +24,13 @@ export async function GET() {
         .eq("user_id", user.id)
         .order("date", { ascending: false })
         .limit(30),
-      db
-        .from("daily_quest_assignments")
-        .select("id, active_date, daily_quest_bank(title)")
-        .eq("is_active", true)
-        .order("active_date", { ascending: false })
-        .limit(30),
-      db
-        .from("reward_redemptions")
-        .select("id, requested_at, status, rewards(title)")
-        .eq("user_id", user.id)
-        .order("requested_at", { ascending: false })
-        .limit(20),
     ]);
 
     return NextResponse.json({
       events: customEvents.data ?? [],
       moods: moods.data ?? [],
-      quests: quests.data ?? [],
-      rewards: rewards.data ?? [],
+      quests: [],
+      rewards: [],
     });
   } catch (error) {
     return NextResponse.json(

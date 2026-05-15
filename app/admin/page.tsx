@@ -20,6 +20,7 @@ import {
   getRatingEmoji,
   LEGEND_DATA,
 } from "@/lib/admin-theme";
+import { COUPLE_EVENT_TYPES } from "@/lib/couple-events";
 import { type MiniGame } from "@/lib/minigames";
 import { CalendarGrid } from "@/components/common/CalendarGrid";
 import { NotesList } from "@/components/common/NotesList";
@@ -153,6 +154,7 @@ export default function AdminDashboard() {
   const [questForm, setQuestForm] = useState(emptyQuestForm);
   const [eventForm, setEventForm] = useState(emptyEventForm);
   const [heroForm, setHeroForm] = useState(emptyHeroForm);
+  const [heroEditingId, setHeroEditingId] = useState<string | null>(null);
   const [heartGrant, setHeartGrant] = useState({ amount: 10, note: "" });
   const [inventoryGrant, setInventoryGrant] = useState({
     item_type: "forgiveness_ticket",
@@ -520,22 +522,51 @@ export default function AdminDashboard() {
     fetchAdminEngagement();
   }
 
-  async function handleCreateHeroMessage() {
-    const res = await fetch("/api/admin/hero-messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(heroForm),
-    });
+  async function handleSaveHeroMessage() {
+    const res = await fetch(
+      heroEditingId
+        ? `/api/admin/hero-messages/${heroEditingId}`
+        : "/api/admin/hero-messages",
+      {
+        method: heroEditingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(heroForm),
+      },
+    );
     const json = await readJsonResponse(res);
     setEngagementMessage(
       res.ok
-        ? "Hero message berhasil dipublish."
-        : (json.details ?? json.error ?? "Gagal membuat hero message."),
+        ? heroEditingId
+          ? "Hero message berhasil disimpan."
+          : "Hero message berhasil dipublish."
+        : (json.details ?? json.error ?? "Gagal menyimpan hero message."),
     );
     if (res.ok) {
+      setHeroEditingId(null);
       setHeroForm(emptyHeroForm());
       fetchHeroMessages();
     }
+  }
+
+  function handleEditHeroMessage(message: any) {
+    setHeroEditingId(message.id);
+    setHeroForm({
+      title: message.title ?? "",
+      body: message.body ?? "",
+      tone: message.tone ?? "soft",
+      active_date:
+        typeof message.active_date === "string"
+          ? message.active_date.slice(0, 10)
+          : "",
+      is_active: Boolean(message.is_active),
+    });
+    setEngagementMessage("Sedang edit hero message. Simpan untuk update dashboard user.");
+  }
+
+  function handleCancelHeroEdit() {
+    setHeroEditingId(null);
+    setHeroForm(emptyHeroForm());
+    setEngagementMessage("");
   }
 
   async function handleToggleHeroMessage(message: any) {
@@ -1029,6 +1060,15 @@ export default function AdminDashboard() {
               render={(quest) => (
                 <div style={styles.gameHeader}>
                   <div>
+                    <p
+                      style={
+                        quest.assigned_today
+                          ? styles.assignedTodayBadge
+                          : styles.gameMeta
+                      }
+                    >
+                      {quest.assigned_today ? "Assigned today" : "Ready to assign"}
+                    </p>
                     <h3 style={styles.gameTitle}>{quest.title}</h3>
                     <p style={styles.mutedText}>
                       {quest.last_used_date
@@ -1037,10 +1077,15 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <button
-                    style={styles.primaryButtonCompact}
+                    style={
+                      quest.assigned_today
+                        ? styles.disabledButtonCompact
+                        : styles.primaryButtonCompact
+                    }
+                    disabled={quest.assigned_today}
                     onClick={() => handleAssignQuest(quest.id)}
                   >
-                    Assign Today
+                    {quest.assigned_today ? "Assigned" : "Assign Today"}
                   </button>
                 </div>
               )}
@@ -1230,7 +1275,9 @@ export default function AdminDashboard() {
             <AdminHeroForm
               form={heroForm}
               setForm={setHeroForm}
-              onSubmit={handleCreateHeroMessage}
+              isEditing={Boolean(heroEditingId)}
+              onCancel={handleCancelHeroEdit}
+              onSubmit={handleSaveHeroMessage}
             />
             {engagementMessage && (
               <p style={styles.infoText}>{engagementMessage}</p>
@@ -1250,6 +1297,13 @@ export default function AdminDashboard() {
                     <p style={styles.gameMeta}>{message.body}</p>
                   </div>
                   <div style={styles.inlineActions}>
+                    <button
+                      type="button"
+                      style={styles.secondaryButtonCompact}
+                      onClick={() => handleEditHeroMessage(message)}
+                    >
+                      Edit
+                    </button>
                     <button
                       style={styles.primaryButtonCompact}
                       onClick={() => handleToggleHeroMessage(message)}
@@ -1885,16 +1939,21 @@ function AdminEventForm({
         </Field>
         <Field
           label="Tipe event"
-          hint="Contoh: custom, date, birthday, reminder."
+          hint="Dipakai countdown dan kalender untuk mengelompokkan momen."
         >
-          <input
+          <select
             style={styles.input}
-            placeholder="custom"
             value={form.event_type}
             onChange={(e) =>
               setForm((current) => ({ ...current, event_type: e.target.value }))
             }
-          />
+          >
+            {COUPLE_EVENT_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
       <CheckboxField
@@ -1917,17 +1976,21 @@ function AdminEventForm({
 function AdminHeroForm({
   form,
   setForm,
+  isEditing,
+  onCancel,
   onSubmit,
 }: {
   form: ReturnType<typeof emptyHeroForm>;
   setForm: Dispatch<SetStateAction<ReturnType<typeof emptyHeroForm>>>;
+  isEditing: boolean;
+  onCancel: () => void;
   onSubmit: () => void;
 }) {
   return (
     <div style={styles.formGrid}>
       <FormIntro
-        title="Atur hero dashboard user"
-        body="Copy ini muncul di area countdown/dashboard. Gunakan untuk pesan harian, reminder lembut, atau vibe spesial."
+        title={isEditing ? "Edit hero dashboard user" : "Atur hero dashboard user"}
+        body="Copy ini muncul di area countdown/dashboard. Pesan aktif dengan tanggal terbaru yang sudah berlaku akan tampil untuk user."
       />
       <Field
         label="Headline hero"
@@ -1995,11 +2058,16 @@ function AdminHeroForm({
           setForm((current) => ({ ...current, is_active: checked }))
         }
         label="Publish sebagai hero aktif"
-        hint="Jika aktif, hero copy lain akan otomatis dinonaktifkan."
+        hint="Jika aktif, hero bisa tampil saat tanggal aktifnya sudah berlaku."
       />
       <div style={styles.formActions}>
+        {isEditing && (
+          <button type="button" style={styles.secondaryButton} onClick={onCancel}>
+            Cancel
+          </button>
+        )}
         <button style={styles.primaryButton} onClick={onSubmit}>
-          Publish Hero Copy
+          {isEditing ? "Save Hero Copy" : "Publish Hero Copy"}
         </button>
       </div>
     </div>
@@ -2437,12 +2505,42 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 800,
     cursor: "pointer",
   },
+  secondaryButton: {
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    padding: "10px 14px",
+    background: "rgba(255,255,255,0.05)",
+    color: "var(--text)",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
   primaryButtonCompact: {
     border: "none",
     borderRadius: 10,
     padding: "9px 12px",
     background: "var(--accent)",
     color: "#210d18",
+    fontWeight: 800,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+  disabledButtonCompact: {
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    padding: "9px 12px",
+    background: "rgba(255,255,255,0.06)",
+    color: "var(--text-muted)",
+    fontWeight: 800,
+    cursor: "not-allowed",
+    whiteSpace: "nowrap",
+    opacity: 0.72,
+  },
+  secondaryButtonCompact: {
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    padding: "9px 12px",
+    background: "rgba(255,255,255,0.05)",
+    color: "var(--text)",
     fontWeight: 800,
     cursor: "pointer",
     whiteSpace: "nowrap",
@@ -2485,5 +2583,15 @@ const styles: Record<string, CSSProperties> = {
     marginTop: 10,
   },
   gameMeta: { fontSize: 11, color: "var(--text-muted)", marginBottom: 4 },
+  assignedTodayBadge: {
+    width: "fit-content",
+    borderRadius: 999,
+    padding: "4px 8px",
+    background: "rgba(119, 215, 185, 0.14)",
+    color: "#9debd2",
+    fontSize: 11,
+    fontWeight: 900,
+    marginBottom: 6,
+  },
   gameTitle: { fontFamily: "Syne, sans-serif", fontSize: 15, marginBottom: 6 },
 };

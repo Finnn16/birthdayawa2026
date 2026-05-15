@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { BIRTHDAY_DATE, BIRTHDAY_START_DATE } from "@/lib/app-config";
 import { createClient } from "@/lib/supabase";
 import { EMOJI_MAP, type LevelProgressData } from "@/lib/mood-types";
 import { type MiniGame } from "@/lib/minigames";
@@ -61,6 +60,12 @@ type HeroMessageData = {
   tone?: string;
 };
 
+type CountdownTarget = {
+  title: string;
+  eventTitle: string;
+  date: string;
+};
+
 async function readJsonResponse(res: Response) {
   const text = await res.text();
   if (!text) return {};
@@ -78,6 +83,49 @@ function readStringList(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function getJakartaDateString(date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function getNextCountdownTarget(events: any[]): CountdownTarget | null {
+  const today = getJakartaDateString();
+  const nextEvent = events
+    .filter(
+      (event) =>
+        event?.is_active !== false &&
+        typeof event?.event_date === "string" &&
+        event.event_date.slice(0, 10) >= today,
+    )
+    .sort((a, b) => a.event_date.localeCompare(b.event_date))[0];
+
+  if (!nextEvent) return null;
+
+  const eventTitle = String(nextEvent.title ?? "Couple event").trim();
+  const eventType = String(nextEvent.event_type ?? "").toLowerCase();
+  const titleText = `${eventTitle} ${eventType}`.toLowerCase();
+  const isBirthday =
+    titleText.includes("birthday") || titleText.includes("ulang tahun");
+
+  return {
+    title: isBirthday ? "Birthday countdown" : `${eventTitle} countdown`,
+    eventTitle,
+    date: nextEvent.event_date.slice(0, 10),
+  };
+}
+
+function formatReadableDate(dateString: string): string {
+  return new Date(`${dateString}T00:00:00+07:00`).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 const emptyEngagementData: EngagementData = {
@@ -146,18 +194,26 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/moods");
+    const res = await fetch("/api/dashboard");
     if (res.status === 401) {
       router.push("/login");
       return;
     }
-    const json = await res.json();
-    setData(json);
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      setError(json.error ?? json.details ?? "Gagal memuat dashboard.");
+      setLoading(false);
+      return;
+    }
+
+    setData(json.dashboard);
+    setMiniGames(json.minigames ?? []);
+    setCompletions(json.completions ?? []);
+    setEngagement(json.engagement ?? emptyEngagementData);
+    setHeroMessage(json.heroMessage ?? defaultHeroMessage);
+    setMiniGameMessage(json.minigameMessage ?? "");
     setLoading(false);
-    fetchMiniGames();
-    fetchEngagement();
-    fetchHeroMessage();
-  }, [fetchHeroMessage, fetchMiniGames, router]);
+  }, [router]);
 
   const fetchEngagement = useCallback(async () => {
     const [
@@ -274,7 +330,7 @@ export default function Dashboard() {
     setMiniGameMessage(
       json.isCorrect
         ? `Yeay, +${json.xpEarned} XP dan +${json.heartsEarned ?? 0} Hearts dari mini-game.`
-        : "Jawabannya belum pas, tapi tetap dicatat ya.",
+        : "TETOT, Salah kocak HAHAHAHA. Boleh coba lagi kok xixixixi.",
     );
     setSubmittingGameId(null);
     fetchData();
@@ -371,6 +427,10 @@ export default function Dashboard() {
       null,
     [engagement.rewards, selectedRewardId],
   );
+  const countdownTarget = useMemo(
+    () => getNextCountdownTarget(engagement.calendar.events),
+    [engagement.calendar.events],
+  );
 
   if (loading) {
     return (
@@ -420,7 +480,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <DashboardHero message={heroMessage} />
+      <DashboardHero message={heroMessage} target={countdownTarget} />
 
       <section className={styles.layout}>
         <div className={styles.primaryColumn}>
@@ -556,8 +616,10 @@ function StatusPill({
 
 function DashboardHero({
   message,
+  target,
 }: {
   message: { title: string; body: string };
+  target: CountdownTarget | null;
 }) {
   const [now, setNow] = useState<number | null>(null);
 
@@ -567,10 +629,11 @@ function DashboardHero({
     return () => window.clearInterval(timer);
   }, []);
 
-  const targetTime = new Date(`${BIRTHDAY_DATE}T00:00:00+07:00`).getTime();
-  const startTime = new Date(`${BIRTHDAY_START_DATE}T00:00:00+07:00`).getTime();
-  const totalWindow = targetTime - startTime;
-  const remaining = now ? Math.max(targetTime - now, 0) : totalWindow;
+  const targetTime = target
+    ? new Date(`${target.date}T00:00:00+07:00`).getTime()
+    : null;
+  const remaining =
+    now && targetTime ? Math.max(targetTime - now, 0) : 0;
 
   const days = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
@@ -580,14 +643,40 @@ function DashboardHero({
   return (
     <section className={styles.hero}>
       <div className={styles.heroCountdown}>
-        <p className={styles.eyebrow}>Birthday countdown</p>
-        <h1>{days} hari lagi</h1>
-        <div className={styles.countdown} aria-label="Birthday countdown">
-          <HeroTimeBox value={String(days).padStart(2, "0")} label="Hari" />
-          <HeroTimeBox value={String(hours).padStart(2, "0")} label="Jam" />
-          <HeroTimeBox value={String(minutes).padStart(2, "0")} label="Menit" />
-          <HeroTimeBox value={String(seconds).padStart(2, "0")} label="Detik" />
+        <div>
+          <p className={styles.countdownTitle}>
+            {target?.title ?? "Couple countdown"}
+          </p>
+          {target ? (
+            <>
+              <h1>{days} hari lagi</h1>
+              <p className={styles.countdownMeta}>
+                {target.eventTitle} · {formatReadableDate(target.date)}
+              </p>
+            </>
+          ) : (
+            <>
+              <h1>Belum ada event</h1>
+              <p className={styles.countdownMeta}>
+                Tambahkan event aktif di Couple Calendar untuk menyalakan countdown.
+              </p>
+            </>
+          )}
         </div>
+        {target && (
+          <div className={styles.countdown} aria-label={target.title}>
+            <HeroTimeBox value={String(days).padStart(2, "0")} label="Hari" />
+            <HeroTimeBox value={String(hours).padStart(2, "0")} label="Jam" />
+            <HeroTimeBox
+              value={String(minutes).padStart(2, "0")}
+              label="Menit"
+            />
+            <HeroTimeBox
+              value={String(seconds).padStart(2, "0")}
+              label="Detik"
+            />
+          </div>
+        )}
       </div>
       <div className={styles.heroCopy}>
         <h2>{message.title}</h2>
@@ -895,11 +984,7 @@ function GardenInventoryPanel({
 }
 
 function CalendarSection({ data }: { data: EngagementData }) {
-  const events = [
-    ...data.calendar.events,
-    ...data.calendar.quests,
-    ...data.calendar.rewards,
-  ].slice(0, 6);
+  const events = data.calendar.events.slice(0, 6);
 
   return (
     <section className={styles.panel}>
@@ -922,12 +1007,9 @@ function CalendarSection({ data }: { data: EngagementData }) {
               </time>
               <div>
                 <strong>
-                  {event.title ??
-                    event.daily_quest_bank?.title ??
-                    event.rewards?.title ??
-                    "Event"}
+                  {event.title ?? "Event"}
                 </strong>
-                <span>{event.type ?? event.status ?? "Calendar"}</span>
+                <span>{event.event_type ?? "Calendar"}</span>
               </div>
             </div>
           ))}
@@ -1178,14 +1260,19 @@ function MiniGamesSection({
                 )}
                 {game.prompt && <p style={s.gamePrompt}>{game.prompt}</p>}
 
-                {completion ? (
+                {completion?.is_correct ? (
                   <p style={s.doneText}>
-                    Selesai · {completion.is_correct ? "benar" : "dicatat"} · +
-                    {completion.xp_earned} XP · +{completion.hearts_earned ?? 0}{" "}
-                    Hearts
+                    Selesai · benar · +{completion.xp_earned} XP · +
+                    {completion.hearts_earned ?? 0} Hearts
                   </p>
                 ) : (
                   <>
+                    {completion && (
+                      <p style={s.infoText}>
+                        TETOT, Salah kocak HAHAHAHA. Boleh coba lagi kok
+                        xixixixi.
+                      </p>
+                    )}
                     {options.length > 0 ? (
                       <div style={s.optionGrid}>
                         {options.map((option) => (
@@ -1220,7 +1307,7 @@ function MiniGamesSection({
                       loading={submittingGameId === game.id}
                       onClick={() => onComplete(game.id)}
                     >
-                      Selesaikan
+                      {completion ? "Coba Lagi" : "Selesaikan"}
                     </LoadingButton>
                   </>
                 )}
@@ -1245,8 +1332,8 @@ function BirthdayCountdown() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const targetTime = new Date(`${BIRTHDAY_DATE}T00:00:00+07:00`).getTime();
-  const startTime = new Date(`${BIRTHDAY_START_DATE}T00:00:00+07:00`).getTime();
+  const targetTime = Date.now();
+  const startTime = targetTime;
   const totalWindow = targetTime - startTime;
   const remaining = now ? Math.max(targetTime - now, 0) : totalWindow;
 

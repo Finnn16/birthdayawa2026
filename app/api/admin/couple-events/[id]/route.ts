@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isCoupleEventType } from "@/lib/couple-events";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
 type Params = { params: Promise<{ id: string }> };
@@ -13,8 +14,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const db = createServiceRoleClient();
     const payload = await req.json();
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    for (const key of ["title", "description", "event_date", "event_type", "visibility"]) {
+    for (const key of ["title", "description", "event_date", "visibility"]) {
       if (typeof payload[key] === "string") update[key] = payload[key].trim();
+    }
+    if ("event_type" in payload) {
+      if (!isCoupleEventType(payload.event_type)) {
+        return NextResponse.json({ error: "Tipe event tidak valid." }, { status: 400 });
+      }
+      update.event_type = payload.event_type;
     }
     if (typeof payload.is_special === "boolean") update.is_special = payload.is_special;
     if (typeof payload.is_active === "boolean") update.is_active = payload.is_active;

@@ -97,12 +97,78 @@ export function normalizeOptions(value: unknown): unknown {
 export function checkMiniGameAnswer(
   submittedAnswer: unknown,
   correctAnswer?: string | null,
+  gameType?: string | null,
 ): boolean {
   if (!correctAnswer?.trim()) return true;
   if (typeof submittedAnswer !== "string") return false;
-  return submittedAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+
+  const submitted = normalizeAnswerText(submittedAnswer);
+  const correct = normalizeAnswerText(correctAnswer);
+
+  if (submitted === correct) return true;
+
+  if (gameType === "Guess the Date") {
+    const submittedDate = normalizeDateAnswer(submittedAnswer);
+    const correctDate = normalizeDateAnswer(correctAnswer);
+    return Boolean(submittedDate && correctDate && submittedDate === correctDate);
+  }
+
+  return false;
 }
 
 export function wouldExceedActiveLimit(currentActiveCount: number): boolean {
   return currentActiveCount >= MAX_ACTIVE_MINI_GAMES;
+}
+
+function normalizeAnswerText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function normalizeDateAnswer(value: string): string | null {
+  const monthNames: Record<string, string> = {
+    januari: "1",
+    january: "1",
+    jan: "1",
+    februari: "2",
+    february: "2",
+    feb: "2",
+    maret: "3",
+    march: "3",
+    mar: "3",
+    april: "4",
+    apr: "4",
+    mei: "5",
+    may: "5",
+    juni: "6",
+    june: "6",
+    jun: "6",
+    juli: "7",
+    july: "7",
+    jul: "7",
+    agustus: "8",
+    august: "8",
+    aug: "8",
+    september: "9",
+    sep: "9",
+    oktober: "10",
+    october: "10",
+    oct: "10",
+    november: "11",
+    nov: "11",
+    desember: "12",
+    december: "12",
+    dec: "12",
+  };
+
+  const normalized = normalizeAnswerText(value)
+    .split(" ")
+    .map((part) => monthNames[part] ?? part)
+    .join(" ");
+  const parts = normalized.match(/\d+/g)?.map((part) => String(Number(part))) ?? [];
+
+  return parts.length >= 2 ? parts.join("-") : null;
 }

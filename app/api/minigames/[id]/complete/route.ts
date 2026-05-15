@@ -50,23 +50,23 @@ export async function POST(req: NextRequest, { params }: Params) {
     );
   }
 
+  const isCorrect = checkMiniGameAnswer(payload.answer, game.correct_answer, game.type);
+  const xpResult = calculateMiniGameXP(game.xp_reward, isCorrect);
+  const heartsEarned = isCorrect ? Math.max(0, Number(game.hearts_reward ?? 0)) : 0;
+
   const { data: existing } = await appDb
     .from("mini_game_completions")
-    .select("id")
+    .select("*")
     .eq("minigame_id", id)
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (existing) {
+  if (existing?.is_correct) {
     return NextResponse.json(
       { error: "Mini-game ini sudah diselesaikan." },
       { status: 409 },
     );
   }
-
-  const isCorrect = checkMiniGameAnswer(payload.answer, game.correct_answer);
-  const xpResult = calculateMiniGameXP(game.xp_reward, isCorrect);
-  const heartsEarned = isCorrect ? Math.max(0, Number(game.hearts_reward ?? 0)) : 0;
 
   const completionPayload = {
     minigame_id: id,
@@ -79,13 +79,54 @@ export async function POST(req: NextRequest, { params }: Params) {
     },
   };
 
-  let { data: completion, error: completionError } = await appDb
-    .from("mini_game_completions")
-    .insert(completionPayload)
-    .select()
-    .single();
+  let completion = null;
+  let completionError = null;
 
-  if (isMissingHeartsEarnedColumn(completionError)) {
+  if (existing) {
+    const updatePayload = {
+      is_correct: isCorrect,
+      xp_earned: xpResult.finalXP,
+      hearts_earned: heartsEarned,
+      metadata_json: {
+        answer: payload.answer ?? null,
+        previous_answer: existing.metadata_json ?? null,
+      },
+    };
+
+    const updateResult = await appDb
+      .from("mini_game_completions")
+      .update(updatePayload)
+      .eq("id", existing.id)
+      .select()
+      .single();
+
+    completion = updateResult.data;
+    completionError = updateResult.error;
+
+    if (isMissingHeartsEarnedColumn(completionError)) {
+      const { hearts_earned: _heartsEarned, ...fallbackPayload } = updatePayload;
+      const fallbackResult = await appDb
+        .from("mini_game_completions")
+        .update(fallbackPayload)
+        .eq("id", existing.id)
+        .select()
+        .single();
+
+      completion = fallbackResult.data;
+      completionError = fallbackResult.error;
+    }
+  } else {
+    const insertResult = await appDb
+      .from("mini_game_completions")
+      .insert(completionPayload)
+      .select()
+      .single();
+
+    completion = insertResult.data;
+    completionError = insertResult.error;
+  }
+
+  if (!existing && isMissingHeartsEarnedColumn(completionError)) {
     const { hearts_earned: _heartsEarned, ...fallbackPayload } = completionPayload;
     const fallbackResult = await appDb
       .from("mini_game_completions")
@@ -111,14 +152,16 @@ export async function POST(req: NextRequest, { params }: Params) {
     );
   }
 
-  await appDb.from("xp_transactions").insert({
-    user_id: user.id,
-    source_type: "minigame",
-    source_id: id,
-    xp_amount: xpResult.baseXP,
-    multiplier: xpResult.multiplier,
-    final_xp: xpResult.finalXP,
-  });
+  if (xpResult.finalXP > 0) {
+    await appDb.from("xp_transactions").insert({
+      user_id: user.id,
+      source_type: "minigame",
+      source_id: id,
+      xp_amount: xpResult.baseXP,
+      multiplier: xpResult.multiplier,
+      final_xp: xpResult.finalXP,
+    });
+  }
 
   if (heartsEarned > 0) {
     await appDb.from("heart_transactions").insert({

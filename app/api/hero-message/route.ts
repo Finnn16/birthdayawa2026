@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getTodayDateString } from "@/lib/date";
 import { createServiceRoleClient, getAuthenticatedUser } from "@/lib/server-supabase";
 
 const fallbackHeroMessage = {
@@ -13,7 +14,7 @@ export async function GET() {
 
   try {
     const db = createServiceRoleClient();
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDateString();
     const { data, error: heroError } = await db
       .from("hero_messages")
       .select("*")

@@ -15,18 +15,24 @@ export async function PATCH(
     const db = createServiceRoleClient();
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
-    if (typeof payload.title === "string") patch.title = payload.title.trim();
-    if (typeof payload.body === "string") patch.body = payload.body.trim();
+    if (typeof payload.title === "string") {
+      if (!payload.title.trim()) {
+        return NextResponse.json({ error: "Hero title wajib diisi." }, { status: 400 });
+      }
+      patch.title = payload.title.trim();
+    }
+    if (typeof payload.body === "string") {
+      if (!payload.body.trim()) {
+        return NextResponse.json({ error: "Hero body wajib diisi." }, { status: 400 });
+      }
+      patch.body = payload.body.trim();
+    }
     if (typeof payload.tone === "string") patch.tone = payload.tone || "soft";
     if ("active_date" in payload) {
       patch.active_date = typeof payload.active_date === "string" && payload.active_date ? payload.active_date : null;
     }
     if (typeof payload.is_active === "boolean") patch.is_active = payload.is_active;
     if ("metadata_json" in payload) patch.metadata_json = payload.metadata_json ?? null;
-
-    if (patch.is_active === true) {
-      await db.from("hero_messages").update({ is_active: false }).neq("id", id).eq("is_active", true);
-    }
 
     const { data, error: updateError } = await db
       .from("hero_messages")

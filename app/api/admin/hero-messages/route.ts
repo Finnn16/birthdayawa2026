@@ -42,12 +42,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Hero body wajib diisi." }, { status: 400 });
     }
 
-    const isActive = payload.is_active !== false;
     const { data: creator } = await db.from("users").select("id").eq("id", user.id).maybeSingle();
-
-    if (isActive) {
-      await db.from("hero_messages").update({ is_active: false }).eq("is_active", true);
-    }
 
     const { data, error: insertError } = await db
       .from("hero_messages")
@@ -56,7 +51,7 @@ export async function POST(req: NextRequest) {
         body: payload.body.trim(),
         tone: typeof payload.tone === "string" && payload.tone ? payload.tone : "soft",
         active_date: typeof payload.active_date === "string" && payload.active_date ? payload.active_date : null,
-        is_active: isActive,
+        is_active: payload.is_active !== false,
         metadata_json: payload.metadata_json ?? null,
         created_by: creator?.id ?? null,
       })

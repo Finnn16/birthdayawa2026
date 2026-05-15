@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTodayDateString } from "@/lib/date";
 import { normalizeJsonList, QUEST_DIFFICULTIES, QUEST_TYPES } from "@/lib/engagement";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
@@ -9,6 +10,7 @@ export async function GET() {
 
   try {
     const db = createServiceRoleClient();
+    const today = getTodayDateString();
     const [{ data: quests, error: questsError }, { data: assignments }] = await Promise.all([
       db.from("daily_quest_bank").select("*").order("created_at", { ascending: false }),
       db.from("daily_quest_assignments").select("quest_id, active_date").order("active_date", { ascending: false }),
@@ -25,6 +27,7 @@ export async function GET() {
         ...quest,
         used: used.has(quest.id),
         last_used_date: used.get(quest.id) ?? null,
+        assigned_today: used.get(quest.id) === today,
       })) ?? [],
     });
   } catch (error) {
