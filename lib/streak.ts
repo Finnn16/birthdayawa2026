@@ -6,10 +6,8 @@ export type StreakTier = {
 
 export const STREAK_TIERS: StreakTier[] = [
   { minDay: 1, maxDay: 6, multiplier: 1 },
-  { minDay: 7, maxDay: 13, multiplier: 1.2 },
-  { minDay: 14, maxDay: 20, multiplier: 1.5 },
-  { minDay: 21, maxDay: 34, multiplier: 1.8 },
-  { minDay: 35, multiplier: 2 },
+  { minDay: 7, maxDay: 13, multiplier: 5 },
+  { minDay: 14, multiplier: 7 },
 ];
 
 export function calculateStreakDay(previousDayStreak?: number | null): number {

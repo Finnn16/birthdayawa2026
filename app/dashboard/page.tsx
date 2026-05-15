@@ -7,7 +7,9 @@ import { BIRTHDAY_DATE, BIRTHDAY_START_DATE } from "@/lib/app-config";
 import { createClient } from "@/lib/supabase";
 import { EMOJI_MAP, type LevelProgressData } from "@/lib/mood-types";
 import { type MiniGame } from "@/lib/minigames";
+import { calculateMoodXP } from "@/lib/xp";
 import { LoadingButton, LoadingSpinner } from "@/components/LoadingSpinner";
+import styles from "./dashboard.module.css";
 
 const ratingColor = (r: number) => {
   if (r <= 3) return "#ff5757";
@@ -34,6 +36,64 @@ type MiniGameCompletionData = {
   minigame_id: string;
   is_correct: boolean;
   xp_earned: number;
+  hearts_earned?: number;
+};
+
+type EngagementData = {
+  heartsBalance: number;
+  rewards: any[];
+  redemptions: any[];
+  questAssignments: any[];
+  questCompletions: any[];
+  inventory: any[];
+  gardenItems: any[];
+  calendar: {
+    events: any[];
+    moods: any[];
+    quests: any[];
+    rewards: any[];
+  };
+};
+
+type HeroMessageData = {
+  title: string;
+  body: string;
+  tone?: string;
+};
+
+async function readJsonResponse(res: Response) {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: `Response non-JSON (${res.status})`,
+      details: text.slice(0, 160),
+    };
+  }
+}
+
+function readStringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+const emptyEngagementData: EngagementData = {
+  heartsBalance: 0,
+  rewards: [],
+  redemptions: [],
+  questAssignments: [],
+  questCompletions: [],
+  inventory: [],
+  gardenItems: [],
+  calendar: { events: [], moods: [], quests: [], rewards: [] },
+};
+
+const defaultHeroMessage = {
+  title: "Jaga mood, kumpulin Hearts, dan rawat garden pelan-pelan.",
+  body: "Hari ini cukup isi mood dulu. Quest dan reward bisa menyusul setelahnya.",
 };
 
 export default function Dashboard() {
@@ -42,6 +102,15 @@ export default function Dashboard() {
   const [miniGames, setMiniGames] = useState<MiniGame[]>([]);
   const [completions, setCompletions] = useState<MiniGameCompletionData[]>([]);
   const [miniGameMessage, setMiniGameMessage] = useState("");
+  const [engagement, setEngagement] =
+    useState<EngagementData>(emptyEngagementData);
+  const [engagementMessage, setEngagementMessage] = useState("");
+  const [heroMessage, setHeroMessage] =
+    useState<HeroMessageData>(defaultHeroMessage);
+  const [questAnswers, setQuestAnswers] = useState<Record<string, string>>({});
+  const [rewardNotes, setRewardNotes] = useState<Record<string, string>>({});
+  const [shopOpen, setShopOpen] = useState(false);
+  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submittingGameId, setSubmittingGameId] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
@@ -68,6 +137,13 @@ export default function Dashboard() {
     setMiniGameMessage(json.message ?? "");
   }, []);
 
+  const fetchHeroMessage = useCallback(async () => {
+    const res = await fetch("/api/hero-message");
+    if (res.status === 401) return;
+    const json = await readJsonResponse(res);
+    setHeroMessage(json.heroMessage ?? defaultHeroMessage);
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/moods");
@@ -79,7 +155,58 @@ export default function Dashboard() {
     setData(json);
     setLoading(false);
     fetchMiniGames();
-  }, [fetchMiniGames, router]);
+    fetchEngagement();
+    fetchHeroMessage();
+  }, [fetchHeroMessage, fetchMiniGames, router]);
+
+  const fetchEngagement = useCallback(async () => {
+    const [
+      heartsRes,
+      rewardsRes,
+      redemptionsRes,
+      questsRes,
+      inventoryRes,
+      gardenRes,
+      calendarRes,
+    ] = await Promise.all([
+      fetch("/api/hearts"),
+      fetch("/api/rewards"),
+      fetch("/api/rewards/redemptions"),
+      fetch("/api/daily-quests"),
+      fetch("/api/inventory"),
+      fetch("/api/garden"),
+      fetch("/api/couple-calendar"),
+    ]);
+
+    if (heartsRes.status === 401) return;
+
+    const [hearts, rewards, redemptions, quests, inventory, garden, calendar] =
+      await Promise.all([
+        readJsonResponse(heartsRes),
+        readJsonResponse(rewardsRes),
+        readJsonResponse(redemptionsRes),
+        readJsonResponse(questsRes),
+        readJsonResponse(inventoryRes),
+        readJsonResponse(gardenRes),
+        readJsonResponse(calendarRes),
+      ]);
+
+    setEngagement({
+      heartsBalance: hearts.balance ?? 0,
+      rewards: rewards.rewards ?? [],
+      redemptions: redemptions.redemptions ?? [],
+      questAssignments: quests.assignments ?? [],
+      questCompletions: quests.completions ?? [],
+      inventory: inventory.inventory ?? [],
+      gardenItems: garden.gardenItems ?? [],
+      calendar: {
+        events: calendar.events ?? [],
+        moods: calendar.moods ?? [],
+        quests: calendar.quests ?? [],
+        rewards: calendar.rewards ?? [],
+      },
+    });
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -146,11 +273,72 @@ export default function Dashboard() {
 
     setMiniGameMessage(
       json.isCorrect
-        ? `Yeay, +${json.xpEarned} XP dari mini-game.`
+        ? `Yeay, +${json.xpEarned} XP dan +${json.heartsEarned ?? 0} Hearts dari mini-game.`
         : "Jawabannya belum pas, tapi tetap dicatat ya.",
     );
     setSubmittingGameId(null);
     fetchData();
+  }
+
+  async function handleRewardRedeem(rewardId: string) {
+    setEngagementMessage("");
+    const res = await fetch(`/api/rewards/${rewardId}/redeem`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: rewardNotes[rewardId] ?? "" }),
+    });
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      setEngagementMessage(
+        json.error ?? json.details ?? "Reward belum bisa diredeem.",
+      );
+      return;
+    }
+    setEngagementMessage(
+      "Reward masuk request pending. Tunggu approval admin ya.",
+    );
+    fetchEngagement();
+  }
+
+  async function handleQuestComplete(assignmentId: string) {
+    setEngagementMessage("");
+    const res = await fetch(`/api/daily-quests/${assignmentId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answer: questAnswers[assignmentId] ?? "" }),
+    });
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      setEngagementMessage(
+        json.error ?? json.details ?? "Quest belum bisa diselesaikan.",
+      );
+      return;
+    }
+    setEngagementMessage(
+      `Quest selesai: +${json.xpEarned ?? 0} XP, +${json.heartsEarned ?? 0} Hearts.`,
+    );
+    fetchData();
+  }
+
+  async function handleUseProtection(itemType: string) {
+    setEngagementMessage("");
+    const res = await fetch("/api/streak-protection/use", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item_type: itemType }),
+    });
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      setEngagementMessage(
+        json.error ?? json.details ?? "Item belum bisa dipakai.",
+      );
+      return;
+    }
+    setEngagementMessage(
+      json.message ??
+        "Request streak protection dikirim. Tunggu approval admin.",
+    );
+    fetchEngagement();
   }
 
   async function handleLogout() {
@@ -166,11 +354,22 @@ export default function Dashboard() {
 
   const completionByGameId = useMemo(
     () =>
-      completions.reduce<Record<string, MiniGameCompletionData>>((map, completion) => {
-        map[completion.minigame_id] = completion;
-        return map;
-      }, {}),
+      completions.reduce<Record<string, MiniGameCompletionData>>(
+        (map, completion) => {
+          map[completion.minigame_id] = completion;
+          return map;
+        },
+        {},
+      ),
     [completions],
+  );
+
+  const selectedReward = useMemo(
+    () =>
+      engagement.rewards.find((reward) => reward.id === selectedRewardId) ??
+      engagement.rewards[0] ??
+      null,
+    [engagement.rewards, selectedRewardId],
   );
 
   if (loading) {
@@ -183,198 +382,696 @@ export default function Dashboard() {
 
   const alreadySubmitted = !!data?.todayMood;
   const currentColor = ratingColor(rating);
+  const nextMoodXpPreview = calculateMoodXP(
+    (data?.currentStreak ?? 0) + 1,
+  ).finalXP;
 
   return (
-    <div style={s.page}>
-      <div style={s.header}>
-        <div>
-          <span style={s.logo}>💗 BirthdayAwa</span>
+    <main className={styles.page}>
+      <header className={styles.topbar}>
+        <div className={styles.statusDock} aria-label="Progress ringkas">
+          <StatusPill
+            icon="💞"
+            label="Level"
+            value={data?.level?.currentLevel.levelName ?? "Level 1"}
+          />
+          <StatusPill icon="⚡" label="XP" value={`${data?.totalXP ?? 0}`} />
+          <StatusPill
+            icon="🔥"
+            label="Streak"
+            value={`${data?.currentStreak ?? 0}`}
+          />
+          <StatusPill
+            icon="✨"
+            label="Multiplier"
+            value={`${data?.streakMultiplier ?? 1}x`}
+          />
         </div>
         <div style={s.headerRight}>
           <span style={s.username}>@{username}</span>
           <LoadingButton
-            style={s.logoutBtn}
+            className={styles.iconButton}
             onClick={handleLogout}
             loading={logoutLoading}
+            aria-label="Keluar"
           >
-            Keluar
+            L
           </LoadingButton>
         </div>
-      </div>
+      </header>
 
-      <div style={s.statsBar}>
-        <StatChip emoji="⚡" label="Total XP" value={`${data?.totalXP ?? 0} XP`} />
-        <StatChip
-          emoji="💞"
-          label="Level"
-          value={
-            data?.level
-              ? `${data.level.currentLevel.levelNumber} - ${data.level.currentLevel.levelName}`
-              : "Level 1"
-          }
-        />
-        <StatChip
-          emoji="🔥"
-          label="Streak"
-          value={`${data?.currentStreak ?? 0} hari`}
-        />
-        <StatChip
-          emoji="✨"
-          label="Multiplier"
-          value={`${data?.streakMultiplier ?? 1}x`}
-        />
-      </div>
+      <DashboardHero message={heroMessage} />
 
-      <div style={s.main}>
-        <BirthdayCountdown />
+      <section className={styles.layout}>
+        <div className={styles.primaryColumn}>
+          <MoodPanel
+            alreadySubmitted={alreadySubmitted}
+            todayMood={data?.todayMood ?? null}
+            result={result}
+            rating={rating}
+            note={note}
+            currentColor={currentColor}
+            error={error}
+            submitting={submitting}
+            rewardPreview={nextMoodXpPreview}
+            onRatingChange={setRating}
+            onNoteChange={setNote}
+            onSubmit={handleSubmit}
+          />
 
-        {data?.level && <LevelCard level={data.level} />}
+          <DailyQuestSection
+            data={engagement}
+            message={engagementMessage}
+            questAnswers={questAnswers}
+            onQuestAnswerChange={(id, value) =>
+              setQuestAnswers((current) => ({ ...current, [id]: value }))
+            }
+            onQuestComplete={handleQuestComplete}
+          />
 
-        <div style={s.card}>
-          {alreadySubmitted ? (
-            <AlreadyDone mood={data!.todayMood!} />
-          ) : result ? (
-            <ResultView result={result} onReset={() => setResult(null)} />
-          ) : (
-            <>
-              <h2 style={s.cardTitle}>Gimana hari ini sayaaangku?</h2>
+          <MiniGamesSection
+            miniGames={miniGames}
+            completions={completionByGameId}
+            answers={answers}
+            message={miniGameMessage}
+            submittingGameId={submittingGameId}
+            onAnswerChange={(gameId, value) =>
+              setAnswers((current) => ({ ...current, [gameId]: value }))
+            }
+            onComplete={handleMiniGameComplete}
+          />
 
-              <div style={{ textAlign: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 64, display: "block", lineHeight: 1.2 }}>
-                  {EMOJI_MAP[rating]}
-                </span>
-                <span
-                  style={{
-                    ...s.ratingBadge,
-                    color: currentColor,
-                    borderColor: currentColor,
-                  }}
-                >
-                  {rating}/10
-                </span>
-              </div>
-
-              <div style={s.sliderWrap}>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={rating}
-                  onChange={(e) => setRating(Number(e.target.value))}
-                  style={{ ...s.slider, accentColor: currentColor }}
-                />
-                <div style={s.sliderLabels}>
-                  <span>berat</span>
-                  <span>mantep</span>
+          {(data?.history?.length ?? 0) > 0 && (
+            <div className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.eyebrow}>History</p>
+                  <h2>7 Hari Terakhir</h2>
                 </div>
               </div>
-
-              <textarea
-                style={s.textarea}
-                placeholder="Cerita dikit dungss mwehehe mau dengar mwaah"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-              />
-
-              {error && <p style={s.error}>{error}</p>}
-
-              <LoadingButton
-                style={{ ...s.submitBtn, background: currentColor }}
-                onClick={handleSubmit}
-                loading={submitting}
-              >
-                Catat Mood
-              </LoadingButton>
-            </>
+              <div style={s.historyGrid}>
+                {data!.history.map((m) => (
+                  <div key={m.date} style={s.historyItem}>
+                    <span style={{ fontSize: 24 }}>{EMOJI_MAP[m.rating]}</span>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      {new Date(m.date + "T00:00:00").toLocaleDateString(
+                        "id-ID",
+                        {
+                          weekday: "short",
+                          day: "numeric",
+                        },
+                      )}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: ratingColor(m.rating),
+                      }}
+                    >
+                      {m.rating}/10
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
-        <MiniGamesSection
-          miniGames={miniGames}
-          completions={completionByGameId}
-          answers={answers}
-          message={miniGameMessage}
-          submittingGameId={submittingGameId}
-          onAnswerChange={(gameId, value) =>
-            setAnswers((current) => ({ ...current, [gameId]: value }))
-          }
-          onComplete={handleMiniGameComplete}
-        />
+        <aside className={styles.sideColumn}>
+          {data?.level && <LevelCard level={data.level} />}
+          <RewardShopPanel
+            data={engagement}
+            onOpenShop={() => {
+              setSelectedRewardId(
+                (current) => current ?? engagement.rewards[0]?.id ?? null,
+              );
+              setShopOpen(true);
+            }}
+          />
+          <GardenInventoryPanel
+            data={engagement}
+            onUseProtection={handleUseProtection}
+          />
+          <CalendarSection data={engagement} />
+        </aside>
+      </section>
 
-        {(data?.history?.length ?? 0) > 0 && (
-          <div style={s.card}>
-            <h2 style={s.cardTitle}>7 Hari Terakhir</h2>
-            <div style={s.historyGrid}>
-              {data!.history.map((m) => (
-                <div key={m.date} style={s.historyItem}>
-                  <span style={{ fontSize: 24 }}>{EMOJI_MAP[m.rating]}</span>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    {new Date(m.date + "T00:00:00").toLocaleDateString("id-ID", {
-                      weekday: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: ratingColor(m.rating),
-                    }}
-                  >
-                    {m.rating}/10
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {shopOpen && (
+        <RewardShopModal
+          rewards={engagement.rewards}
+          selectedReward={selectedReward}
+          rewardNotes={rewardNotes}
+          onSelectReward={(rewardId) => setSelectedRewardId(rewardId)}
+          onNoteChange={(rewardId, value) =>
+            setRewardNotes((current) => ({ ...current, [rewardId]: value }))
+          }
+          onClose={() => setShopOpen(false)}
+          onRedeem={(rewardId) => {
+            handleRewardRedeem(rewardId);
+            setShopOpen(false);
+          }}
+        />
+      )}
+    </main>
   );
 }
 
-function StatChip({
-  emoji,
+function StatusPill({
+  icon,
   label,
   value,
 }: {
-  emoji: string;
+  icon: string;
   label: string;
   value: string;
 }) {
   return (
-    <div style={s.statChip}>
-      <span>{emoji}</span>
-      <div>
-        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{label}</div>
-        <div style={s.statValue}>{value}</div>
-      </div>
+    <div className={styles.statusPill} title={`${label}: ${value}`}>
+      <span aria-hidden="true">{icon}</span>
+      <small>{value}</small>
     </div>
   );
 }
 
+function DashboardHero({
+  message,
+}: {
+  message: { title: string; body: string };
+}) {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const targetTime = new Date(`${BIRTHDAY_DATE}T00:00:00+07:00`).getTime();
+  const startTime = new Date(`${BIRTHDAY_START_DATE}T00:00:00+07:00`).getTime();
+  const totalWindow = targetTime - startTime;
+  const remaining = now ? Math.max(targetTime - now, 0) : totalWindow;
+
+  const days = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+
+  return (
+    <section className={styles.hero}>
+      <div className={styles.heroCountdown}>
+        <p className={styles.eyebrow}>Birthday countdown</p>
+        <h1>{days} hari lagi</h1>
+        <div className={styles.countdown} aria-label="Birthday countdown">
+          <HeroTimeBox value={String(days).padStart(2, "0")} label="Hari" />
+          <HeroTimeBox value={String(hours).padStart(2, "0")} label="Jam" />
+          <HeroTimeBox value={String(minutes).padStart(2, "0")} label="Menit" />
+          <HeroTimeBox value={String(seconds).padStart(2, "0")} label="Detik" />
+        </div>
+      </div>
+      <div className={styles.heroCopy}>
+        <h2>{message.title}</h2>
+        <p>{message.body}</p>
+      </div>
+    </section>
+  );
+}
+
+function HeroTimeBox({ value, label }: { value: string; label: string }) {
+  return (
+    <div className={styles.timeBox}>
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function MoodPanel({
+  alreadySubmitted,
+  todayMood,
+  result,
+  rating,
+  note,
+  currentColor,
+  error,
+  submitting,
+  rewardPreview,
+  onRatingChange,
+  onNoteChange,
+  onSubmit,
+}: {
+  alreadySubmitted: boolean;
+  todayMood: DashboardData["todayMood"];
+  result: {
+    message: string;
+    streakDay: number;
+    xpEarned: number;
+    multiplier?: number;
+  } | null;
+  rating: number;
+  note: string;
+  currentColor: string;
+  error: string;
+  submitting: boolean;
+  rewardPreview: number;
+  onRatingChange: (rating: number) => void;
+  onNoteChange: (note: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <section className={styles.panel}>
+      {alreadySubmitted && todayMood ? (
+        <AlreadyDone mood={todayMood} />
+      ) : result ? (
+        <ResultView result={result} onReset={() => undefined} />
+      ) : (
+        <>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.eyebrow}>Mood check-in</p>
+              <h2>Gimana hari ini?</h2>
+            </div>
+            <span className={styles.moodBadge}>{rating}/10</span>
+          </div>
+
+          <div className={styles.moodStage}>
+            <div className={styles.moodEmoji} aria-hidden="true">
+              {EMOJI_MAP[rating]}
+            </div>
+            <div>
+              <strong>{rating}/10</strong>
+              <span>
+                {rating <= 3 ? "Berat" : rating <= 6 ? "Cukup" : "Hangat"}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.sliderWrap}>
+            <input
+              className={styles.moodSlider}
+              type="range"
+              min={1}
+              max={10}
+              value={rating}
+              onChange={(event) => onRatingChange(Number(event.target.value))}
+              style={
+                {
+                  "--mood-progress": `${((rating - 1) / 9) * 100}%`,
+                  "--mood-color": currentColor,
+                } as CSSProperties
+              }
+              aria-label="Pilih mood hari ini"
+            />
+            <div className={styles.sliderMeta}>
+              <span>1</span>
+              <span>5</span>
+              <span>10</span>
+            </div>
+          </div>
+
+          <textarea
+            className={styles.note}
+            placeholder="Tulis sedikit cerita hari ini..."
+            value={note}
+            onChange={(event) => onNoteChange(event.target.value)}
+            rows={4}
+          />
+
+          {error && <p style={s.error}>{error}</p>}
+
+          <div className={styles.actionRow}>
+            <LoadingButton
+              className={styles.primaryButton}
+              onClick={onSubmit}
+              loading={submitting}
+            >
+              Simpan Mood
+            </LoadingButton>
+            <p>Reward streak: +{rewardPreview} XP</p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function DailyQuestSection({
+  data,
+  message,
+  questAnswers,
+  onQuestAnswerChange,
+  onQuestComplete,
+}: {
+  data: EngagementData;
+  message: string;
+  questAnswers: Record<string, string>;
+  onQuestAnswerChange: (id: string, value: string) => void;
+  onQuestComplete: (id: string) => void;
+}) {
+  const completedQuestIds = new Set(
+    data.questCompletions.map((completion) => completion.assignment_id),
+  );
+
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p className={styles.eyebrow}>Daily quest</p>
+          <h2>Quest hari ini</h2>
+        </div>
+      </div>
+      {message && <p style={s.infoText}>{message}</p>}
+      {data.questAssignments.length === 0 ? (
+        <p style={s.emptyText}>Belum ada quest hari ini.</p>
+      ) : (
+        <div className={styles.questList}>
+          {data.questAssignments.map((assignment) => {
+            const quest = assignment.daily_quest_bank;
+            const done = completedQuestIds.has(assignment.id);
+            const options = readStringList(quest?.options_json);
+
+            return (
+              <article key={assignment.id} className={styles.questCard}>
+                <div>
+                  <p style={s.kicker}>
+                    {quest?.type} · {quest?.difficulty}
+                  </p>
+                  <h3>{quest?.title}</h3>
+                  {quest?.prompt && <p>{quest.prompt}</p>}
+                </div>
+                {done ? (
+                  <button type="button">Selesai</button>
+                ) : (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {options.length > 0 ? (
+                      <div style={s.optionGrid}>
+                        {options.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            style={{
+                              ...s.optionBtn,
+                              ...(questAnswers[assignment.id] === option
+                                ? s.optionBtnActive
+                                : {}),
+                            }}
+                            onClick={() =>
+                              onQuestAnswerChange(assignment.id, option)
+                            }
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <textarea
+                        style={s.textarea}
+                        placeholder="Jawaban kecil kamu..."
+                        rows={2}
+                        value={questAnswers[assignment.id] ?? ""}
+                        onChange={(event) =>
+                          onQuestAnswerChange(assignment.id, event.target.value)
+                        }
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onQuestComplete(assignment.id)}
+                    >
+                      +{quest?.hearts_reward ?? 0} Hearts
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RewardShopPanel({
+  data,
+  onOpenShop,
+}: {
+  data: EngagementData;
+  onOpenShop: () => void;
+}) {
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p className={styles.eyebrow}>Reward shop</p>
+          <h2>Request reward</h2>
+        </div>
+      </div>
+      <div className={styles.shopPreview}>
+        <strong>{data.heartsBalance} Hearts tersedia</strong>
+        <p>Pilih reward lewat popup supaya dashboard tetap lega.</p>
+        <button
+          type="button"
+          className={styles.primaryButton}
+          onClick={onOpenShop}
+          disabled={data.rewards.length === 0}
+        >
+          Buka Reward Shop
+        </button>
+        {data.redemptions.length > 0 && (
+          <p>
+            Request terbaru: {data.redemptions[0].rewards?.title ?? "Reward"} ·{" "}
+            {data.redemptions[0].status}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function GardenInventoryPanel({
+  data,
+  onUseProtection,
+}: {
+  data: EngagementData;
+  onUseProtection: (itemType: string) => void;
+}) {
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p className={styles.eyebrow}>Mood garden</p>
+          <h2>Garden preview</h2>
+        </div>
+      </div>
+      <div style={s.optionGrid}>
+        {data.inventory.map((item) => (
+          <button
+            key={item.id}
+            style={s.optionBtn}
+            type="button"
+            onClick={() => onUseProtection(item.item_type)}
+          >
+            {item.item_type} · {item.quantity}
+          </button>
+        ))}
+      </div>
+      {data.gardenItems.length === 0 ? (
+        <p style={s.emptyText}>Garden masih kosong.</p>
+      ) : (
+        <div className={styles.gardenGrid}>
+          {data.gardenItems.slice(0, 12).map((item) => (
+            <div
+              key={item.id}
+              className={styles.gardenTile}
+              title={item.item_type}
+            >
+              {gardenEmoji(item.item_type)}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CalendarSection({ data }: { data: EngagementData }) {
+  const events = [
+    ...data.calendar.events,
+    ...data.calendar.quests,
+    ...data.calendar.rewards,
+  ].slice(0, 6);
+
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p className={styles.eyebrow}>Couple calendar</p>
+          <h2>Agenda dekat</h2>
+        </div>
+      </div>
+      {events.length === 0 ? (
+        <p style={s.emptyText}>Belum ada event calendar.</p>
+      ) : (
+        <div className={styles.calendarList}>
+          {events.map((event, index) => (
+            <div key={`${event.id}-${index}`} className={styles.calendarRow}>
+              <time>
+                {event.event_date ??
+                  event.active_date ??
+                  event.requested_at?.slice(0, 10)}
+              </time>
+              <div>
+                <strong>
+                  {event.title ??
+                    event.daily_quest_bank?.title ??
+                    event.rewards?.title ??
+                    "Event"}
+                </strong>
+                <span>{event.type ?? event.status ?? "Calendar"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RewardShopModal({
+  rewards,
+  selectedReward,
+  rewardNotes,
+  onSelectReward,
+  onNoteChange,
+  onClose,
+  onRedeem,
+}: {
+  rewards: any[];
+  selectedReward: any | null;
+  rewardNotes: Record<string, string>;
+  onSelectReward: (rewardId: string) => void;
+  onNoteChange: (rewardId: string, value: string) => void;
+  onClose: () => void;
+  onRedeem: (rewardId: string) => void;
+}) {
+  return (
+    <div
+      className={styles.modalOverlay}
+      role="presentation"
+      onMouseDown={onClose}
+    >
+      <section
+        className={styles.rewardModal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reward-shop-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className={styles.modalHeader}>
+          <div>
+            <p className={styles.eyebrow}>Reward shop</p>
+            <h2 id="reward-shop-title">Tukar Hearts</h2>
+          </div>
+          <button
+            type="button"
+            className={styles.iconButton}
+            onClick={onClose}
+            aria-label="Tutup"
+          >
+            X
+          </button>
+        </div>
+
+        {rewards.length === 0 ? (
+          <p style={s.emptyText}>Belum ada reward aktif.</p>
+        ) : (
+          <div className={styles.rewardPicker}>
+            {rewards.map((reward) => (
+              <button
+                key={reward.id}
+                type="button"
+                className={
+                  selectedReward?.id === reward.id
+                    ? styles.rewardOptionActive
+                    : styles.rewardOption
+                }
+                onClick={() => onSelectReward(reward.id)}
+              >
+                <span>
+                  <strong>{reward.title}</strong>
+                  <small>{reward.category ?? "Reward"}</small>
+                </span>
+                <em>{reward.cost_hearts} Hearts</em>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedReward && (
+          <>
+            <label className={styles.reasonField}>
+              <span>Reason optional</span>
+              <textarea
+                value={rewardNotes[selectedReward.id] ?? ""}
+                onChange={(event) =>
+                  onNoteChange(selectedReward.id, event.target.value)
+                }
+                rows={4}
+                placeholder="Kenapa mau reward ini hari ini?"
+              />
+            </label>
+
+            <div className={styles.modalActions}>
+              <p>
+                Dipilih: <strong>{selectedReward.title}</strong>
+              </p>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => onRedeem(selectedReward.id)}
+              >
+                Request Reward
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function gardenEmoji(itemType: string) {
+  if (itemType.includes("cloud")) return "☁️";
+  if (itemType.includes("tree")) return "🌳";
+  if (itemType.includes("glowing")) return "🌸";
+  if (itemType.includes("flower") || itemType.includes("bloom")) return "🌷";
+  return "🌱";
+}
+
 function LevelCard({ level }: { level: LevelProgressData }) {
   return (
-    <div style={s.card}>
+    <section className={styles.panel}>
       <div style={s.levelHeader}>
         <div>
           <p style={s.kicker}>Love Level</p>
           <h2 style={s.levelTitle}>
-            Level {level.currentLevel.levelNumber} - {level.currentLevel.levelName}
+            Level {level.currentLevel.levelNumber} -{" "}
+            {level.currentLevel.levelName}
           </h2>
         </div>
         <span style={s.levelXP}>{level.totalXP} XP</span>
       </div>
       <div style={s.progressTrack}>
-        <div style={{ ...s.progressFill, width: `${level.progressPercent}%` }} />
+        <div
+          style={{ ...s.progressFill, width: `${level.progressPercent}%` }}
+        />
       </div>
       <p style={s.progressText}>
         {level.nextLevel
           ? `${level.progressXP}/${level.requiredForNext} XP menuju ${level.nextLevel.levelName}`
           : "Level maksimum, cintanya sudah endless."}
       </p>
-    </div>
+    </section>
   );
 }
 
@@ -391,12 +1088,12 @@ function AlreadyDone({
       </h3>
       <p style={{ color: "var(--text-muted)", marginTop: 8, fontSize: 14 }}>
         Mood:{" "}
-        <strong style={{ color: ratingColor(mood.rating) }}>{mood.rating}/10</strong>
+        <strong style={{ color: ratingColor(mood.rating) }}>
+          {mood.rating}/10
+        </strong>
         {mood.streak_day > 1 && ` · 🔥 ${mood.streak_day} hari berturut-turut`}
       </p>
-      {mood.note && (
-        <p style={s.notePreview}>&quot;{mood.note}&quot;</p>
-      )}
+      {mood.note && <p style={s.notePreview}>&quot;{mood.note}&quot;</p>}
       <p style={{ marginTop: 16, fontSize: 13, color: "var(--text-muted)" }}>
         jangan lupa besok isi lagi yyaa!!! 💕
       </p>
@@ -407,7 +1104,12 @@ function AlreadyDone({
 function ResultView({
   result,
 }: {
-  result: { message: string; streakDay: number; xpEarned: number; multiplier?: number };
+  result: {
+    message: string;
+    streakDay: number;
+    xpEarned: number;
+    multiplier?: number;
+  };
   onReset: () => void;
 }) {
   return (
@@ -418,7 +1120,9 @@ function ResultView({
         {result.multiplier && result.multiplier > 1 && (
           <span style={s.chip}>{result.multiplier}x streak</span>
         )}
-        {result.streakDay > 1 && <span style={s.chip}>🔥 {result.streakDay} hari streak</span>}
+        {result.streakDay > 1 && (
+          <span style={s.chip}>🔥 {result.streakDay} hari streak</span>
+        )}
       </div>
     </div>
   );
@@ -442,18 +1146,19 @@ function MiniGamesSection({
   onComplete: (gameId: string) => void;
 }) {
   return (
-    <div style={s.card}>
+    <section className={styles.panel}>
       <h2 style={s.cardTitle}>Mini-game Hari Ini</h2>
       {message && <p style={s.infoText}>{message}</p>}
       {miniGames.length === 0 ? (
-        <p style={s.emptyText}>Belum ada mini-game aktif. Nanti admin bisa masukin kejutan kecil di sini.</p>
+        <p style={s.emptyText}>
+          Belum ada mini-game aktif. Nanti admin bisa masukin kejutan kecil di
+          sini.
+        </p>
       ) : (
         <div style={s.gameList}>
           {miniGames.map((game) => {
             const completion = completions[game.id];
-            const options = Array.isArray(game.options_json)
-              ? game.options_json.filter((item): item is string => typeof item === "string")
-              : [];
+            const options = readStringList(game.options_json);
 
             return (
               <div key={game.id} style={s.gameCard}>
@@ -464,14 +1169,20 @@ function MiniGamesSection({
                     </p>
                     <h3 style={s.gameTitle}>{game.title}</h3>
                   </div>
-                  <span style={s.gameXP}>+{game.xp_reward} XP</span>
+                  <span style={s.gameXP}>
+                    +{game.xp_reward} XP · +{game.hearts_reward ?? 0} Hearts
+                  </span>
                 </div>
-                {game.description && <p style={s.gameDescription}>{game.description}</p>}
+                {game.description && (
+                  <p style={s.gameDescription}>{game.description}</p>
+                )}
                 {game.prompt && <p style={s.gamePrompt}>{game.prompt}</p>}
 
                 {completion ? (
                   <p style={s.doneText}>
-                    Selesai · {completion.is_correct ? "benar" : "dicatat"} · +{completion.xp_earned} XP
+                    Selesai · {completion.is_correct ? "benar" : "dicatat"} · +
+                    {completion.xp_earned} XP · +{completion.hearts_earned ?? 0}{" "}
+                    Hearts
                   </p>
                 ) : (
                   <>
@@ -483,7 +1194,9 @@ function MiniGamesSection({
                             type="button"
                             style={{
                               ...s.optionBtn,
-                              ...(answers[game.id] === option ? s.optionBtnActive : {}),
+                              ...(answers[game.id] === option
+                                ? s.optionBtnActive
+                                : {}),
                             }}
                             onClick={() => onAnswerChange(game.id, option)}
                           >
@@ -496,7 +1209,9 @@ function MiniGamesSection({
                         style={s.textarea}
                         placeholder="Tulis jawaban kecil di sini..."
                         value={answers[game.id] ?? ""}
-                        onChange={(e) => onAnswerChange(game.id, e.target.value)}
+                        onChange={(e) =>
+                          onAnswerChange(game.id, e.target.value)
+                        }
                         rows={2}
                       />
                     )}
@@ -514,7 +1229,7 @@ function MiniGamesSection({
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -659,10 +1374,11 @@ const s: Record<string, CSSProperties> = {
     boxShadow: "0 16px 40px rgba(0, 0, 0, 0.18)",
   },
   cardTitle: {
-    fontSize: 16,
-    fontFamily: "Syne, sans-serif",
-    fontWeight: 700,
-    marginBottom: 20,
+    color: "#f1b9d6",
+    fontSize: 12,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    paddingBottom: 10,
   },
   kicker: {
     color: "var(--text-muted)",
@@ -889,6 +1605,31 @@ const s: Record<string, CSSProperties> = {
     fontSize: 13,
     fontWeight: 700,
   },
+  gardenGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+    gap: 8,
+    marginTop: 14,
+  },
+  gardenTile: {
+    aspectRatio: "1",
+    borderRadius: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "var(--surface2)",
+    border: "1px solid var(--border)",
+    fontSize: 22,
+  },
+  calendarRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "10px 0",
+    borderBottom: "1px solid var(--border)",
+    color: "var(--text-muted)",
+    fontSize: 13,
+  },
   birthdayCard: {
     position: "relative",
     overflow: "hidden",
@@ -916,7 +1657,8 @@ const s: Record<string, CSSProperties> = {
     width: 150,
     height: 150,
     borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(255, 143, 188, 0.35) 0%, transparent 70%)",
+    background:
+      "radial-gradient(circle, rgba(255, 143, 188, 0.35) 0%, transparent 70%)",
     filter: "blur(8px)",
     pointerEvents: "none",
   },

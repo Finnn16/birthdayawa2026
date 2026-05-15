@@ -8,6 +8,13 @@ type Params = {
   params: Promise<{ id: string }>;
 };
 
+function isMissingHeartsEarnedColumn(error: { message?: string; code?: string } | null) {
+  return (
+    error?.code === "PGRST204" &&
+    error.message?.toLowerCase().includes("hearts_earned")
+  );
+}
+
 export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params;
   const { supabase, user, error } = await getAuthenticatedUser();
@@ -59,20 +66,36 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const isCorrect = checkMiniGameAnswer(payload.answer, game.correct_answer);
   const xpResult = calculateMiniGameXP(game.xp_reward, isCorrect);
+  const heartsEarned = isCorrect ? Math.max(0, Number(game.hearts_reward ?? 0)) : 0;
 
-  const { data: completion, error: completionError } = await appDb
+  const completionPayload = {
+    minigame_id: id,
+    user_id: user.id,
+    is_correct: isCorrect,
+    xp_earned: xpResult.finalXP,
+    hearts_earned: heartsEarned,
+    metadata_json: {
+      answer: payload.answer ?? null,
+    },
+  };
+
+  let { data: completion, error: completionError } = await appDb
     .from("mini_game_completions")
-    .insert({
-      minigame_id: id,
-      user_id: user.id,
-      is_correct: isCorrect,
-      xp_earned: xpResult.finalXP,
-      metadata_json: {
-        answer: payload.answer ?? null,
-      },
-    })
+    .insert(completionPayload)
     .select()
     .single();
+
+  if (isMissingHeartsEarnedColumn(completionError)) {
+    const { hearts_earned: _heartsEarned, ...fallbackPayload } = completionPayload;
+    const fallbackResult = await appDb
+      .from("mini_game_completions")
+      .insert(fallbackPayload)
+      .select()
+      .single();
+
+    completion = fallbackResult.data;
+    completionError = fallbackResult.error;
+  }
 
   if (completionError) {
     if (completionError.code === "23505") {
@@ -97,9 +120,25 @@ export async function POST(req: NextRequest, { params }: Params) {
     final_xp: xpResult.finalXP,
   });
 
+  if (heartsEarned > 0) {
+    await appDb.from("heart_transactions").insert({
+      user_id: user.id,
+      source_type: "minigame_bonus",
+      source_id: id,
+      amount: heartsEarned,
+      note: `Mini-game: ${game.title}`,
+      metadata_json: {
+        minigame_id: id,
+        completion_id: completion.id,
+        is_correct: isCorrect,
+      },
+    });
+  }
+
   return NextResponse.json({
     completion,
     isCorrect,
     xpEarned: xpResult.finalXP,
+    heartsEarned,
   });
 }

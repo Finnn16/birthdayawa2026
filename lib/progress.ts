@@ -1,5 +1,6 @@
 import { getLevelProgress } from "@/lib/level";
 import { getStreakMultiplier } from "@/lib/streak";
+import { getCurrentStreakWithProtection } from "@/lib/streak-protection";
 
 type SupabaseLike = {
   from: (table: string) => {
@@ -31,15 +32,7 @@ export async function getNonMoodTransactionXP(
 }
 
 export async function getCurrentStreak(supabase: SupabaseLike, userId: string): Promise<number> {
-  const { data } = await supabase
-    .from("moods")
-    .select("streak_day")
-    .eq("user_id", userId)
-    .order("date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return data?.streak_day ?? 0;
+  return getCurrentStreakWithProtection(supabase, userId);
 }
 
 export async function getUserProgress(supabase: SupabaseLike, userId: string) {

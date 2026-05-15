@@ -1,6 +1,6 @@
-import { getStreakMultiplier } from "@/lib/streak";
-
-export const MOOD_BASE_XP = 10;
+export const MOOD_BASE_XP = 5;
+export const MOOD_STREAK_7_DAY_XP = 25;
+export const MOOD_STREAK_14_DAY_XP = 35;
 
 export type XpSourceType = "mood" | "minigame" | "bonus";
 
@@ -9,11 +9,18 @@ export function calculateMoodXP(streakDay: number): {
   multiplier: number;
   finalXP: number;
 } {
-  const multiplier = getStreakMultiplier(streakDay);
+  const normalizedStreak = Math.max(1, Math.floor(streakDay || 1));
+  const finalXP =
+    normalizedStreak >= 14
+      ? MOOD_STREAK_14_DAY_XP
+      : normalizedStreak >= 7
+        ? MOOD_STREAK_7_DAY_XP
+        : MOOD_BASE_XP;
+
   return {
     baseXP: MOOD_BASE_XP,
-    multiplier,
-    finalXP: Math.round(MOOD_BASE_XP * multiplier),
+    multiplier: finalXP / MOOD_BASE_XP,
+    finalXP,
   };
 }
 

@@ -22,6 +22,18 @@ model User {
   xpTransactions             XpTransaction[]
   miniGameCompletions        MiniGameCompletion[]
   miniGamesCreated           MiniGame[]           @relation("MiniGameCreator")
+  heartTransactions          HeartTransaction[]   @relation("HeartTransactionUser")
+  heartTransactionsCreated   HeartTransaction[]   @relation("HeartTransactionCreator")
+  rewardRedemptions          RewardRedemption[]
+  rewardsCreated             Reward[]             @relation("RewardCreator")
+  questBankCreated           DailyQuestBank[]      @relation("DailyQuestCreator")
+  questAssignmentsCreated    DailyQuestAssignment[] @relation("DailyQuestAssigner")
+  questCompletions           DailyQuestCompletion[]
+  inventory                  UserInventory[]
+  streakProtectionLogs       StreakProtectionLog[]
+  gardenItems                GardenItem[]
+  coupleEventsCreated        CoupleEvent[]         @relation("CoupleEventCreator")
+  heroMessagesCreated        HeroMessage[]          @relation("HeroMessageCreator")
 
   @@index([phoneNumber])
   @@map("users")
@@ -85,6 +97,7 @@ model MiniGame {
   type        String
   difficulty  String
   xpReward    Int                  @map("xp_reward")
+  heartsReward Int                 @default(0) @map("hearts_reward")
   activeDate  DateTime?            @map("active_date") @db.Date
   isActive    Boolean              @default(false) @map("is_active")
   prompt      String?
@@ -107,6 +120,7 @@ model MiniGameCompletion {
   userId       String    @map("user_id") @db.Uuid
   isCorrect    Boolean   @default(false) @map("is_correct")
   xpEarned     Int       @default(0) @map("xp_earned")
+  heartsEarned Int       @default(0) @map("hearts_earned")
   completedAt  DateTime? @default(now()) @map("completed_at") @db.Timestamptz(6)
   metadataJson Json?     @map("metadata_json")
   minigame     MiniGame  @relation(fields: [minigameId], references: [id], onDelete: Cascade)
@@ -115,4 +129,209 @@ model MiniGameCompletion {
   @@unique([minigameId, userId])
   @@index([userId, completedAt(sort: Desc)])
   @@map("mini_game_completions")
+}
+
+model HeartTransaction {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  sourceType   String    @map("source_type")
+  sourceId     String?   @map("source_id") @db.Uuid
+  amount       Int
+  note         String?
+  metadataJson Json?     @map("metadata_json")
+  createdBy    String?   @map("created_by") @db.Uuid
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user         User      @relation("HeartTransactionUser", fields: [userId], references: [id], onDelete: Cascade)
+  creator      User?     @relation("HeartTransactionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("heart_transactions")
+}
+
+model Reward {
+  id                    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                 String             @unique
+  description           String?
+  costHearts            Int                @map("cost_hearts")
+  category              String             @default("experience")
+  isActive              Boolean            @default(true) @map("is_active")
+  requiresAdminApproval Boolean            @default(true) @map("requires_admin_approval")
+  stockLimit            Int?               @map("stock_limit")
+  metadataJson          Json?              @map("metadata_json")
+  createdBy             String?            @map("created_by") @db.Uuid
+  createdAt             DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime?          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator               User?              @relation("RewardCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  redemptions           RewardRedemption[]
+
+  @@index([isActive, category])
+  @@map("rewards")
+}
+
+model RewardRedemption {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rewardId    String    @map("reward_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  status      String    @default("pending")
+  costHearts  Int       @map("cost_hearts")
+  note        String?
+  adminNote   String?   @map("admin_note")
+  requestedAt DateTime? @default(now()) @map("requested_at") @db.Timestamptz(6)
+  approvedAt  DateTime? @map("approved_at") @db.Timestamptz(6)
+  fulfilledAt DateTime? @map("fulfilled_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  reward      Reward    @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, requestedAt(sort: Desc)])
+  @@index([status, requestedAt(sort: Desc)])
+  @@map("reward_redemptions")
+}
+
+model DailyQuestBank {
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title          String                 @unique
+  description    String?
+  type           String                 @default("reflection")
+  difficulty     String                 @default("easy")
+  xpReward       Int                    @default(0) @map("xp_reward")
+  heartsReward   Int                    @default(0) @map("hearts_reward")
+  prompt         String?
+  optionsJson    Json?                  @map("options_json")
+  correctAnswer  String?                @map("correct_answer")
+  isActive       Boolean                @default(true) @map("is_active")
+  metadataJson   Json?                  @map("metadata_json")
+  createdBy      String?                @map("created_by") @db.Uuid
+  createdAt      DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime?              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator        User?                  @relation("DailyQuestCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  assignments    DailyQuestAssignment[]
+  completions    DailyQuestCompletion[]
+
+  @@index([isActive, type])
+  @@map("daily_quest_bank")
+}
+
+model DailyQuestAssignment {
+  id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId     String                 @map("quest_id") @db.Uuid
+  activeDate  DateTime               @map("active_date") @db.Date
+  isActive    Boolean                @default(true) @map("is_active")
+  assignedBy  String?                @map("assigned_by") @db.Uuid
+  createdAt   DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  quest       DailyQuestBank         @relation(fields: [questId], references: [id], onDelete: Cascade)
+  assigner    User?                  @relation("DailyQuestAssigner", fields: [assignedBy], references: [id], onDelete: SetNull)
+  completions DailyQuestCompletion[]
+
+  @@unique([questId, activeDate])
+  @@index([isActive, activeDate(sort: Desc)])
+  @@map("daily_quest_assignments")
+}
+
+model DailyQuestCompletion {
+  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId String               @map("assignment_id") @db.Uuid
+  questId      String               @map("quest_id") @db.Uuid
+  userId       String               @map("user_id") @db.Uuid
+  activeDate   DateTime             @map("active_date") @db.Date
+  answer       String?
+  isCorrect    Boolean              @default(true) @map("is_correct")
+  xpEarned     Int                  @default(0) @map("xp_earned")
+  heartsEarned Int                  @default(0) @map("hearts_earned")
+  completedAt  DateTime?            @default(now()) @map("completed_at") @db.Timestamptz(6)
+  metadataJson Json?                @map("metadata_json")
+  assignment   DailyQuestAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  quest        DailyQuestBank       @relation(fields: [questId], references: [id], onDelete: Cascade)
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, userId])
+  @@index([userId, activeDate(sort: Desc)])
+  @@map("daily_quest_completions")
+}
+
+model UserInventory {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  itemType     String    @map("item_type")
+  quantity     Int       @default(0)
+  sourceType   String    @default("admin_grant") @map("source_type")
+  metadataJson Json?     @map("metadata_json")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType])
+  @@map("user_inventory")
+}
+
+model StreakProtectionLog {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  itemType          String    @map("item_type")
+  protectedDate     DateTime  @map("protected_date") @db.Date
+  reason            String?
+  status            String    @default("approved")
+  requestedAt       DateTime? @default(now()) @map("requested_at") @db.Timestamptz(6)
+  approvedAt        DateTime? @map("approved_at") @db.Timestamptz(6)
+  reviewedBy        String?   @map("reviewed_by") @db.Uuid
+  adminNote         String?   @map("admin_note")
+  previousStreakDay Int?      @map("previous_streak_day")
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, protectedDate])
+  @@index([status, requestedAt(sort: Desc)])
+  @@map("streak_protection_logs")
+}
+
+model GardenItem {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  sourceType   String    @map("source_type")
+  sourceId     String?   @map("source_id") @db.Uuid
+  itemType     String    @map("item_type")
+  moodRating   Int?      @map("mood_rating")
+  earnedDate   DateTime  @default(dbgenerated("CURRENT_DATE")) @map("earned_date") @db.Date
+  metadataJson Json?     @map("metadata_json")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, earnedDate(sort: Desc)])
+  @@map("garden_items")
+}
+
+model CoupleEvent {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  description  String?
+  eventDate    DateTime  @map("event_date") @db.Date
+  eventType    String    @default("custom") @map("event_type")
+  visibility   String    @default("both")
+  isSpecial    Boolean   @default(false) @map("is_special")
+  isActive     Boolean   @default(true) @map("is_active")
+  metadataJson Json?     @map("metadata_json")
+  createdBy    String?   @map("created_by") @db.Uuid
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator      User?     @relation("CoupleEventCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([eventDate(sort: Desc), isActive])
+  @@map("couple_events")
+}
+
+model HeroMessage {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  body         String
+  tone         String    @default("soft")
+  activeDate   DateTime? @map("active_date") @db.Date
+  isActive     Boolean   @default(true) @map("is_active")
+  metadataJson Json?     @map("metadata_json")
+  createdBy    String?   @map("created_by") @db.Uuid
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator      User?     @relation("HeroMessageCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive, activeDate(sort: Desc), createdAt(sort: Desc)])
+  @@map("hero_messages")
 }

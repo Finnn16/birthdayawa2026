@@ -14,6 +14,7 @@ export type MiniGame = {
   type: string;
   difficulty: string;
   xp_reward: number;
+  hearts_reward: number;
   active_date: string | null;
   is_active: boolean;
   prompt: string | null;
@@ -31,6 +32,7 @@ export type MiniGameCompletion = {
   user_id: string;
   is_correct: boolean;
   xp_earned: number;
+  hearts_earned: number;
   completed_at: string;
   metadata_json: unknown;
 };
@@ -66,6 +68,16 @@ export function validateMiniGamePayload(payload: Record<string, unknown>): strin
     payload.xp_reward > 200
   ) {
     return "XP reward harus angka 0 sampai 200.";
+  }
+
+  if (
+    "hearts_reward" in payload &&
+    (typeof payload.hearts_reward !== "number" ||
+      !Number.isFinite(payload.hearts_reward) ||
+      payload.hearts_reward < 0 ||
+      payload.hearts_reward > 200)
+  ) {
+    return "Hearts reward harus angka 0 sampai 200.";
   }
 
   return null;

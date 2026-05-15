@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTodayDateString, addDays } from "@/lib/date";
+import { getTodayDateString } from "@/lib/date";
+import { getGardenItemTypeForMood } from "@/lib/engagement";
 import { createServiceRoleClient, getAuthenticatedUser } from "@/lib/server-supabase";
-import { calculateStreakDay } from "@/lib/streak";
+import { getNextMoodStreakDay } from "@/lib/streak-protection";
 import { calculateMoodXP } from "@/lib/xp";
 import { getUserProgress } from "@/lib/progress";
 
@@ -38,17 +39,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Hitung streak
-  const yesterdayStr = addDays(today, -1);
+  const appDb = createServiceRoleClient();
 
-  const { data: lastMood } = await supabase
-    .from("moods")
-    .select("streak_day")
-    .eq("user_id", user.id)
-    .eq("date", yesterdayStr)
-    .maybeSingle();
-
-  const streakDay = calculateStreakDay(lastMood?.streak_day);
+  // Hitung streak, termasuk tanggal yang sudah diproteksi admin.
+  const streakDay = await getNextMoodStreakDay(appDb, user.id, today);
   const xpResult = calculateMoodXP(streakDay);
   const xpEarned = xpResult.finalXP;
 
@@ -85,13 +79,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Gagal simpan mood" }, { status: 500 });
   }
 
-  await createServiceRoleClient().from("xp_transactions").insert({
+  await appDb.from("xp_transactions").insert({
     user_id: user.id,
     source_type: "mood",
     source_id: mood.id,
     xp_amount: xpResult.baseXP,
     multiplier: xpResult.multiplier,
     final_xp: xpEarned,
+  });
+
+  await appDb.from("garden_items").insert({
+    user_id: user.id,
+    source_type: "mood",
+    source_id: mood.id,
+    item_type: getGardenItemTypeForMood(rating),
+    mood_rating: rating,
+    earned_date: today,
+    metadata_json: {
+      note_added: Boolean(note?.trim()),
+    },
   });
 
   return NextResponse.json({
@@ -127,7 +133,8 @@ export async function GET(req: NextRequest) {
     .order("date", { ascending: false })
     .limit(7);
 
-  const progress = await getUserProgress(supabase, user.id);
+  const appDb = createServiceRoleClient();
+  const progress = await getUserProgress(appDb, user.id);
 
   return NextResponse.json({
     todayMood,

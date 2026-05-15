@@ -4,6 +4,13 @@ import { getTodayDateString } from "@/lib/date";
 import { normalizeOptions, validateMiniGamePayload, wouldExceedActiveLimit } from "@/lib/minigames";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
+function isMissingHeartsRewardColumn(error: { message?: string; code?: string } | null) {
+  return (
+    error?.code === "PGRST204" &&
+    error.message?.toLowerCase().includes("hearts_reward")
+  );
+}
+
 export async function GET() {
   try {
     const { supabase, user, error } = await requireAdmin();
@@ -94,30 +101,45 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const { data, error: insertError } = await adminDb
+    const insertPayload = {
+      title: String(payload.title).trim(),
+      description: typeof payload.description === "string" ? payload.description.trim() : null,
+      type: payload.type,
+      difficulty: payload.difficulty,
+      xp_reward: payload.xp_reward,
+      hearts_reward: typeof payload.hearts_reward === "number" ? payload.hearts_reward : 0,
+      active_date:
+        typeof payload.active_date === "string" && payload.active_date
+          ? payload.active_date
+          : getTodayDateString(),
+      is_active: Boolean(payload.is_active),
+      prompt: typeof payload.prompt === "string" ? payload.prompt.trim() : null,
+      options_json: normalizeOptions(payload.options_json),
+      correct_answer:
+        typeof payload.correct_answer === "string" && payload.correct_answer.trim()
+          ? payload.correct_answer.trim()
+          : null,
+      metadata_json: payload.metadata_json ?? null,
+      created_by: creatorProfile?.id ?? null,
+    };
+
+    let { data, error: insertError } = await adminDb
       .from("mini_games")
-      .insert({
-        title: String(payload.title).trim(),
-        description: typeof payload.description === "string" ? payload.description.trim() : null,
-        type: payload.type,
-        difficulty: payload.difficulty,
-        xp_reward: payload.xp_reward,
-        active_date:
-          typeof payload.active_date === "string" && payload.active_date
-            ? payload.active_date
-            : getTodayDateString(),
-        is_active: Boolean(payload.is_active),
-        prompt: typeof payload.prompt === "string" ? payload.prompt.trim() : null,
-        options_json: normalizeOptions(payload.options_json),
-        correct_answer:
-          typeof payload.correct_answer === "string" && payload.correct_answer.trim()
-            ? payload.correct_answer.trim()
-            : null,
-        metadata_json: payload.metadata_json ?? null,
-        created_by: creatorProfile?.id ?? null,
-      })
+      .insert(insertPayload)
       .select()
       .single();
+
+    if (isMissingHeartsRewardColumn(insertError)) {
+      const { hearts_reward: _heartsReward, ...fallbackPayload } = insertPayload;
+      const fallbackResult = await adminDb
+        .from("mini_games")
+        .insert(fallbackPayload)
+        .select()
+        .single();
+
+      data = fallbackResult.data;
+      insertError = fallbackResult.error;
+    }
 
     if (insertError) {
       console.error("Mini-game insert error:", insertError);
