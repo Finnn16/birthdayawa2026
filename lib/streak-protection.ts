@@ -96,6 +96,7 @@ export async function recalculateUserMoodStreaks(db: DbLike, userId: string) {
 
   let lastDate: string | null = null;
   let lastStreak = 0;
+  let updatedCount = 0;
 
   for (const mood of (moods ?? []) as MoodRow[]) {
     const moodDate = toDateString(mood.date);
@@ -121,9 +122,16 @@ export async function recalculateUserMoodStreaks(db: DbLike, userId: string) {
 
     if (mood.streak_day !== nextStreak) {
       await db.from("moods").update({ streak_day: nextStreak }).eq("id", mood.id);
+      updatedCount += 1;
     }
 
     lastDate = moodDate;
     lastStreak = nextStreak;
   }
+
+  return {
+    moodCount: moods?.length ?? 0,
+    updatedCount,
+    currentStreak: lastStreak,
+  };
 }

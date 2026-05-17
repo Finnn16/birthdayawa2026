@@ -491,7 +491,7 @@ export default function Dashboard() {
             <div className={styles.panelHeader}>
               <div>
                 <p className={styles.eyebrow}>Daily hub</p>
-                <h2>Satu fokus dulu</h2>
+                <h2>Satu-satu duls saja yaa</h2>
               </div>
               <span className={styles.rewardBadge}>
                 +{nextMoodXpPreview} XP ready
@@ -573,7 +573,6 @@ export default function Dashboard() {
               />
             </div>
           </section>
-
         </div>
 
         <aside className={styles.sideColumn}>
@@ -601,6 +600,7 @@ export default function Dashboard() {
       {shopOpen && (
         <RewardShopModal
           rewards={engagement.rewards}
+          heartsBalance={engagement.heartsBalance}
           selectedReward={selectedReward}
           rewardNotes={rewardNotes}
           onSelectReward={(rewardId) => setSelectedRewardId(rewardId)}
@@ -673,8 +673,7 @@ function DashboardHero({
   const targetTime = target
     ? new Date(`${target.date}T00:00:00+07:00`).getTime()
     : null;
-  const remaining =
-    now && targetTime ? Math.max(targetTime - now, 0) : 0;
+  const remaining = now && targetTime ? Math.max(targetTime - now, 0) : 0;
 
   const days = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
@@ -699,7 +698,7 @@ function DashboardHero({
             <>
               <h1>Belum ada event</h1>
               <p className={styles.countdownMeta}>
-                Tambahkan event aktif di Couple Calendar untuk menyalakan countdown.
+                Ditunggu yaa kita planning duls mwehehe.
               </p>
             </>
           )}
@@ -949,16 +948,23 @@ function RewardShopPanel({
   onOpenShop: () => void;
 }) {
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${styles.rewardPanel}`}>
       <div className={styles.panelHeader}>
         <div>
           <p className={styles.eyebrow}>Reward shop</p>
-          <h2>Request reward</h2>
+          <h2>Mau tuker hadiah ga?</h2>
         </div>
       </div>
       <div className={styles.shopPreview}>
-        <strong>{data.heartsBalance} Hearts tersedia</strong>
-        <p>Pilih reward lewat popup supaya dashboard tetap lega.</p>
+        <div className={styles.walletCard}>
+          <span className={styles.walletLabel}>Hearts kamu</span>
+          <div className={styles.walletAmount}>
+            <strong>{data.heartsBalance}</strong>
+            <span>Hearts</span>
+          </div>
+          <HeartStack count={data.heartsBalance} />
+        </div>
+        <p className={styles.shopHint}>Mau hadiah apa ngook?</p>
         <button
           type="button"
           className={styles.primaryButton}
@@ -967,12 +973,6 @@ function RewardShopPanel({
         >
           Buka Reward Shop
         </button>
-        {data.redemptions.length > 0 && (
-          <p>
-            Request terbaru: {data.redemptions[0].rewards?.title ?? "Reward"} ·{" "}
-            {data.redemptions[0].status}
-          </p>
-        )}
       </div>
     </section>
   );
@@ -986,11 +986,11 @@ function GardenInventoryPanel({
   onUseProtection: (itemType: string) => void;
 }) {
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${styles.gardenPanel}`}>
       <div className={styles.panelHeader}>
         <div>
           <p className={styles.eyebrow}>Mood garden</p>
-          <h2>Garden preview</h2>
+          <h2>Mood Garden</h2>
         </div>
       </div>
       <div style={s.optionGrid}>
@@ -1028,7 +1028,7 @@ function CalendarSection({ data }: { data: EngagementData }) {
   const events = data.calendar.events.slice(0, 6);
 
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${styles.calendarPanel}`}>
       <div className={styles.panelHeader}>
         <div>
           <p className={styles.eyebrow}>Couple calendar</p>
@@ -1047,9 +1047,7 @@ function CalendarSection({ data }: { data: EngagementData }) {
                   event.requested_at?.slice(0, 10)}
               </time>
               <div>
-                <strong>
-                  {event.title ?? "Event"}
-                </strong>
+                <strong>{event.title ?? "Event"}</strong>
                 <span>{event.event_type ?? "Calendar"}</span>
               </div>
             </div>
@@ -1062,14 +1060,14 @@ function CalendarSection({ data }: { data: EngagementData }) {
 
 function HistoryPanel({ history }: { history: DashboardData["history"] }) {
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${styles.historyPanel}`}>
       <div className={styles.panelHeader}>
         <div>
           <p className={styles.eyebrow}>History</p>
           <h2>7 Hari Terakhir</h2>
         </div>
       </div>
-      <div style={s.historyGrid}>
+      <div className={styles.compactHistoryGrid} style={s.historyGrid}>
         {history.map((m) => (
           <div key={m.date} style={s.historyItem}>
             <span style={{ fontSize: 24 }}>{EMOJI_MAP[m.rating]}</span>
@@ -1097,6 +1095,7 @@ function HistoryPanel({ history }: { history: DashboardData["history"] }) {
 
 function RewardShopModal({
   rewards,
+  heartsBalance,
   selectedReward,
   rewardNotes,
   onSelectReward,
@@ -1105,6 +1104,7 @@ function RewardShopModal({
   onRedeem,
 }: {
   rewards: any[];
+  heartsBalance: number;
   selectedReward: any | null;
   rewardNotes: Record<string, string>;
   onSelectReward: (rewardId: string) => void;
@@ -1112,6 +1112,10 @@ function RewardShopModal({
   onClose: () => void;
   onRedeem: (rewardId: string) => void;
 }) {
+  const selectedCost = Number(selectedReward?.cost_hearts ?? 0);
+  const remainingHearts = heartsBalance - selectedCost;
+  const canRedeemSelected = Boolean(selectedReward) && remainingHearts >= 0;
+
   return (
     <div
       className={styles.modalOverlay}
@@ -1140,27 +1144,34 @@ function RewardShopModal({
           </button>
         </div>
 
+        <div className={styles.modalWallet}>
+          <div>
+            <span>Hearts dimiliki</span>
+            <strong>{heartsBalance}</strong>
+          </div>
+          <HeartStack count={heartsBalance} />
+          {selectedReward && (
+            <p>
+              Biaya reward: {selectedCost} Hearts ·{" "}
+              {remainingHearts >= 0
+                ? `Sisa ${remainingHearts} Hearts`
+                : `Kurang ${Math.abs(remainingHearts)} Hearts`}
+            </p>
+          )}
+        </div>
+
         {rewards.length === 0 ? (
           <p style={s.emptyText}>Belum ada reward aktif.</p>
         ) : (
           <div className={styles.rewardPicker}>
             {rewards.map((reward) => (
-              <button
+              <RewardOptionButton
                 key={reward.id}
-                type="button"
-                className={
-                  selectedReward?.id === reward.id
-                    ? styles.rewardOptionActive
-                    : styles.rewardOption
-                }
+                reward={reward}
+                active={selectedReward?.id === reward.id}
+                heartsBalance={heartsBalance}
                 onClick={() => onSelectReward(reward.id)}
-              >
-                <span>
-                  <strong>{reward.title}</strong>
-                  <small>{reward.category ?? "Reward"}</small>
-                </span>
-                <em>{reward.cost_hearts} Hearts</em>
-              </button>
+              />
             ))}
           </div>
         )}
@@ -1168,7 +1179,7 @@ function RewardShopModal({
         {selectedReward && (
           <>
             <label className={styles.reasonField}>
-              <span>Reason optional</span>
+              <span>Alasannya apa nich?</span>
               <textarea
                 value={rewardNotes[selectedReward.id] ?? ""}
                 onChange={(event) =>
@@ -1187,13 +1198,70 @@ function RewardShopModal({
                 type="button"
                 className={styles.primaryButton}
                 onClick={() => onRedeem(selectedReward.id)}
+                disabled={!canRedeemSelected}
               >
-                Request Reward
+                {canRedeemSelected ? "Request Reward" : "Hearts belum cukup"}
               </button>
             </div>
           </>
         )}
       </section>
+    </div>
+  );
+}
+
+function RewardOptionButton({
+  reward,
+  active,
+  heartsBalance,
+  onClick,
+}: {
+  reward: any;
+  active: boolean;
+  heartsBalance: number;
+  onClick: () => void;
+}) {
+  const cost = Number(reward.cost_hearts ?? 0);
+  const remaining = heartsBalance - cost;
+
+  return (
+    <button
+      type="button"
+      className={active ? styles.rewardOptionActive : styles.rewardOption}
+      onClick={onClick}
+    >
+      <span>
+        <strong>{reward.title}</strong>
+        <small>{reward.category ?? "Reward"}</small>
+      </span>
+      <em>
+        <span>{cost} Hearts</span>
+        <small
+          className={
+            remaining >= 0 ? styles.rewardAffordable : styles.rewardShort
+          }
+        >
+          {remaining >= 0 ? "Cukup" : `Kurang ${Math.abs(remaining)}`}
+        </small>
+      </em>
+    </button>
+  );
+}
+
+function HeartStack({ count }: { count: number }) {
+  const visibleHearts = Math.min(Math.max(0, Math.floor(count)), 10);
+
+  return (
+    <div className={styles.heartStack} aria-label={`${count} Hearts`}>
+      {visibleHearts > 0 ? (
+        Array.from({ length: visibleHearts }).map((_, index) => (
+          <span key={index} aria-hidden="true">
+            💗
+          </span>
+        ))
+      ) : (
+        <span aria-hidden="true">♡</span>
+      )}
     </div>
   );
 }
@@ -1208,7 +1276,7 @@ function gardenEmoji(itemType: string) {
 
 function LevelCard({ level }: { level: LevelProgressData }) {
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${styles.levelPanel}`}>
       <div style={s.levelHeader}>
         <div>
           <p style={s.kicker}>Love Level</p>

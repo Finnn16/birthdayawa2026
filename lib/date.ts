@@ -10,8 +10,9 @@ export function getTodayDateString(date = new Date(), timeZone = APP_TIME_ZONE):
 }
 
 export function addDays(dateString: string, days: number): string {
-  const date = new Date(`${dateString}T00:00:00+07:00`);
-  date.setDate(date.getDate() + days);
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().split("T")[0];
 }
 

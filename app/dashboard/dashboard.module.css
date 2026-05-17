@@ -500,6 +500,11 @@
   color: #10231e;
 }
 
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .ghostButton {
   min-height: 38px;
   border-radius: 8px;
@@ -533,6 +538,93 @@
 .shopPreview p {
   color: #d7b8c8;
   line-height: 1.5;
+}
+
+.walletCard {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(241, 185, 214, 0.2);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(241, 185, 214, 0.14),
+      rgba(119, 215, 185, 0.08)
+    ),
+    rgba(255, 255, 255, 0.05);
+}
+
+.walletLabel {
+  color: #f1b9d6;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.walletAmount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.walletAmount strong {
+  font-size: clamp(42px, 9vw, 58px);
+  line-height: 0.9;
+}
+
+.walletAmount span {
+  color: #f8d9e8;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.heartStack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  color: #f8d9e8;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.heartStack span {
+  filter: drop-shadow(0 4px 10px rgba(241, 185, 214, 0.16));
+}
+
+.heartStack small {
+  margin-left: 4px;
+  color: #f1b9d6;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.shopFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.shopFacts span,
+.latestRequest {
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #dac1ce;
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.shopHint {
+  color: #dac1ce;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
 }
 
 .questCard {
@@ -665,6 +757,47 @@
   font-size: 28px;
 }
 
+.modalWallet {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(241, 185, 214, 0.2);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(241, 185, 214, 0.14),
+      rgba(119, 215, 185, 0.08)
+    ),
+    rgba(255, 255, 255, 0.05);
+}
+
+.modalWallet > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalWallet > div:first-child span {
+  color: #f1b9d6;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.modalWallet strong {
+  font-size: 42px;
+  line-height: 0.9;
+}
+
+.modalWallet p {
+  color: #dac1ce;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 .rewardPicker {
   display: grid;
   gap: 10px;
@@ -694,8 +827,8 @@
   background: rgba(119, 215, 185, 0.12);
 }
 
-.rewardOption span,
-.rewardOptionActive span {
+.rewardOption > span,
+.rewardOptionActive > span {
   display: grid;
   gap: 5px;
 }
@@ -714,6 +847,29 @@
   font-size: 12px;
   font-style: normal;
   font-weight: 900;
+}
+
+.rewardOption em,
+.rewardOptionActive em {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.rewardOption em span,
+.rewardOptionActive em span {
+  color: #f8d9e8;
+  font-size: 13px;
+}
+
+.rewardOption em .rewardAffordable,
+.rewardOptionActive em .rewardAffordable {
+  color: #9debd2;
+}
+
+.rewardOption em .rewardShort,
+.rewardOptionActive em .rewardShort {
+  color: #ffb1b1;
 }
 
 .reasonField {
@@ -737,6 +893,156 @@
 
 .modalActions {
   margin-top: 16px;
+}
+
+@media (min-width: 921px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .primaryColumn {
+    gap: 18px;
+  }
+
+  .sideColumn {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .sideColumn > .panel {
+    min-height: 168px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sideColumn .panelHeader {
+    margin-bottom: 10px;
+  }
+
+  .sideColumn .panelHeader h2 {
+    font-size: 18px;
+    line-height: 1.08;
+  }
+
+  .sideColumn .eyebrow {
+    font-size: 11px;
+  }
+
+  .levelPanel {
+    justify-content: space-between;
+  }
+
+  .rewardPanel .shopPreview {
+    min-height: 0;
+    flex: 1;
+    align-content: start;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .rewardPanel .walletCard {
+    grid-column: auto;
+    grid-row: auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    padding: 9px;
+  }
+
+  .rewardPanel .walletLabel {
+    grid-column: 1 / -1;
+    font-size: 10px;
+  }
+
+  .rewardPanel .walletAmount {
+    grid-column: 1;
+    gap: 6px;
+  }
+
+  .rewardPanel .walletAmount strong {
+    font-size: 32px;
+  }
+
+  .rewardPanel .walletAmount span {
+    font-size: 12px;
+  }
+
+  .rewardPanel .heartStack {
+    grid-column: 2;
+    justify-content: flex-end;
+    min-height: 18px;
+    gap: 3px;
+    font-size: 14px;
+  }
+
+  .rewardPanel .shopHint {
+    margin: 0;
+    font-size: 11.5px;
+  }
+
+  .rewardPanel .shopPreview .primaryButton {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .rewardPanel .latestRequest {
+    display: none;
+  }
+
+  .gardenPanel .gardenGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .gardenPanel .gardenTile {
+    font-size: 18px;
+  }
+
+  .calendarPanel .calendarList {
+    max-height: 112px;
+    overflow: auto;
+  }
+
+  .calendarPanel .calendarRow {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .calendarPanel .calendarRow strong {
+    font-size: 13px;
+  }
+
+  .calendarPanel .calendarRow span,
+  .calendarPanel .calendarRow time {
+    font-size: 11px;
+  }
+
+  .compactHistoryGrid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .compactHistoryGrid > div {
+    padding: 6px 2px !important;
+    gap: 3px !important;
+  }
+}
+
+@media (min-width: 921px) and (max-width: 1180px) {
+  .sideColumn {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 920px) {
@@ -883,5 +1189,14 @@
   .rewardOption,
   .rewardOptionActive {
     grid-template-columns: 1fr;
+  }
+
+  .shopFacts {
+    grid-template-columns: 1fr;
+  }
+
+  .rewardOption em,
+  .rewardOptionActive em {
+    justify-items: start;
   }
 }

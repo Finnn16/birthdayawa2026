@@ -137,7 +137,7 @@ async function readJsonResponse(res: Response) {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { moods, stats, userInfo, loading, error } = useAdminData();
+  const { moods, stats, userInfo, loading, error, refetch } = useAdminData();
   const [activeTab, setActiveTab] = useState<AdminTab>("notes");
   const [miniGames, setMiniGames] = useState<MiniGame[]>([]);
   const [miniGameLoading, setMiniGameLoading] = useState(false);
@@ -489,6 +489,23 @@ export default function AdminDashboard() {
     );
   }
 
+  async function handleRecalculateStreaks() {
+    const res = await fetch("/api/admin/streaks/recalculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scope: "target" }),
+    });
+    const json = await readJsonResponse(res);
+    setEngagementMessage(
+      res.ok
+        ? (json.message ?? "Streak berhasil direcalculate.")
+        : (json.details ?? json.error ?? "Gagal recalculate streak."),
+    );
+    if (res.ok) {
+      refetch();
+    }
+  }
+
   async function handleCreateEvent() {
     const res = await fetch("/api/admin/couple-events", {
       method: "POST",
@@ -678,7 +695,8 @@ export default function AdminDashboard() {
 
       <div style={styles.container}>
         {stats && (
-          <div style={styles.statsGrid}>
+          <div>
+            <div style={styles.statsGrid}>
             <StatCard
               label="Rata-rata Mood"
               value={`${stats.avgRating}/10`}
@@ -742,6 +760,16 @@ export default function AdminDashboard() {
               color="var(--red)"
               style={{ ...styles.statCard, borderColor: "var(--red)30" }}
             />
+            </div>
+            <div style={styles.statsActions}>
+              <button
+                type="button"
+                style={styles.secondaryButton}
+                onClick={handleRecalculateStreaks}
+              >
+                Recalculate Streak
+              </button>
+            </div>
           </div>
         )}
 
@@ -2334,6 +2362,11 @@ const styles: Record<string, CSSProperties> = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 10,
+  },
+  statsActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: 10,
   },
   statCard: {
     background: "var(--surface)",
