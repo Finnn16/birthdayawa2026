@@ -9,10 +9,10 @@
 }
 
 .shell {
-  width: min(1120px, 100%);
+  width: min(1180px, 100%);
   margin: 0 auto;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -68,9 +68,19 @@
   font-weight: 900;
 }
 
+.goldenOverview,
+.goldenWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.618fr) minmax(320px, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  min-width: 0;
+}
+
 .progressDock {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  grid-template-columns: 1fr;
+  align-content: stretch;
   gap: 10px;
   min-width: 0;
 }
@@ -79,7 +89,6 @@
 .metricCard,
 .heroStrip,
 .todayPanel,
-.exploreSection,
 .featurePanel {
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.13);
@@ -87,12 +96,12 @@
 }
 
 .levelStrip {
-  min-height: 92px;
+  min-height: 128px;
   padding: 14px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.7fr);
-  align-items: center;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  align-content: space-between;
+  gap: 14px;
   background: rgba(54, 31, 41, 0.62);
 }
 
@@ -150,7 +159,7 @@
   color: #d7b8c8;
   font-size: 12px;
   font-weight: 800;
-  text-align: right;
+  text-align: left;
 }
 
 .levelTrack {
@@ -174,7 +183,7 @@
 }
 
 .metricCard {
-  min-height: 92px;
+  min-height: 108px;
   padding: 11px 9px;
   display: grid;
   justify-items: center;
@@ -215,12 +224,12 @@
 }
 
 .heroStrip {
-  min-height: 138px;
-  padding: 14px;
+  min-height: clamp(300px, 35vw, 390px);
+  padding: clamp(18px, 3vw, 28px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.9fr);
+  grid-template-columns: minmax(0, 1.618fr) minmax(220px, 1fr);
   align-items: stretch;
-  gap: 12px;
+  gap: 16px;
   background:
     linear-gradient(135deg, rgba(22, 72, 184, 0.7), rgba(91, 42, 67, 0.55)),
     rgba(54, 31, 41, 0.74);
@@ -228,8 +237,8 @@
 
 .heroCopy {
   display: grid;
-  align-content: center;
-  gap: 6px;
+  align-content: space-between;
+  gap: 18px;
 }
 
 .heroCopy p {
@@ -239,7 +248,7 @@
 }
 
 .heroCopy h2 {
-  font-size: clamp(42px, 10vw, 72px);
+  font-size: clamp(56px, 9vw, 112px);
   line-height: 0.88;
 }
 
@@ -255,7 +264,7 @@
 }
 
 .timeCell {
-  min-height: 88px;
+  min-height: 100%;
   display: grid;
   place-items: center;
   padding: 9px 6px;
@@ -265,17 +274,18 @@
 }
 
 .timeCell strong {
-  font-size: 28px;
+  font-size: clamp(28px, 4vw, 42px);
   line-height: 1;
 }
 
 .timeCell span {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .todayPanel {
-  padding: 14px;
+  padding: clamp(16px, 2vw, 22px);
+  min-width: 0;
 }
 
 .panelHeader,
@@ -349,11 +359,11 @@
 
 .taskBody {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .moodSummary {
-  min-height: 78px;
+  min-height: 112px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -365,14 +375,14 @@
 }
 
 .moodNumber {
-  width: 54px;
-  height: 54px;
+  width: 68px;
+  height: 68px;
   display: grid;
   place-items: center;
   border-radius: 8px;
   background: rgba(119, 215, 185, 0.16);
   color: #a7f0dc;
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 900;
 }
 
@@ -448,7 +458,7 @@
 }
 
 .note {
-  min-height: 76px;
+  min-height: 118px;
   resize: vertical;
   padding: 12px;
 }
@@ -514,23 +524,36 @@
 }
 
 .exploreSection {
-  padding: 14px;
   min-width: 0;
+  padding: 0;
   overflow: hidden;
+}
+
+.exploreSection .sectionHeader {
+  min-height: 48px;
+  margin-bottom: 10px;
+}
+
+.exploreSection .sectionHeader h2 {
+  font-size: 18px;
+}
+
+.exploreSection .sectionHeader span {
+  display: none;
 }
 
 .featureRail {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   min-width: 0;
   max-width: 100%;
 }
 
 .featurePanel {
-  min-height: 248px;
+  min-height: 178px;
   min-width: 0;
-  padding: 14px;
+  padding: 13px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   align-content: stretch;
@@ -575,7 +598,7 @@
 }
 
 .rewardHero {
-  min-height: 82px;
+  min-height: 70px;
   display: grid;
   align-content: center;
   gap: 4px;
@@ -593,7 +616,7 @@
 
 .rewardHero strong {
   color: #b9ffea;
-  font-size: 42px;
+  font-size: 36px;
   line-height: 0.9;
 }
 
@@ -638,8 +661,8 @@
 
 .gardenPlot {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
 }
 
 .gardenPlot span {
@@ -657,20 +680,36 @@
   align-content: start;
 }
 
-@media (min-width: 900px) {
-  .shell {
-    grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
-    align-items: start;
+@media (min-width: 1080px) {
+  .todayPanel {
+    min-height: 520px;
   }
 
-  .topbar,
-  .progressDock,
-  .heroStrip {
-    grid-column: 1 / -1;
+  .exploreSection {
+    align-self: start;
+  }
+}
+
+@media (max-width: 980px) {
+  .goldenOverview,
+  .goldenWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .progressDock {
+    grid-template-columns: minmax(0, 1.618fr) minmax(280px, 1fr);
+  }
+
+  .levelStrip {
+    min-height: 108px;
   }
 
   .featureRail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .featurePanel {
+    min-height: 210px;
   }
 }
 
@@ -754,6 +793,20 @@
 
   .todayPanel {
     padding: 12px;
+  }
+
+  .moodSummary {
+    min-height: 78px;
+  }
+
+  .moodNumber {
+    width: 54px;
+    height: 54px;
+    font-size: 28px;
+  }
+
+  .note {
+    min-height: 76px;
   }
 
   .panelHeader {

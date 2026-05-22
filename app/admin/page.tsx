@@ -38,6 +38,7 @@ type AdminTab =
   | "inventory"
   | "coupleCalendar"
   | "hero"
+  | "letters"
   | "streakProtection";
 
 type MiniGameFormState = {
@@ -107,6 +108,42 @@ const emptyHeroForm = () => ({
   is_active: true,
 });
 
+const defaultLetterPages = [
+  {
+    headline: "Edisi Spesial Untuk Awa",
+    subtitle: "Kabar baik hari ini: kamu dicintai pelan-pelan, tapi penuh.",
+    image_url: "",
+    image_position: "left",
+    sections: [
+      {
+        title: "Opening",
+        body: "Tulis bagian pertama surat di sini. Bisa dibuat seperti kolom koran kecil yang hangat.",
+      },
+    ],
+  },
+  {
+    headline: "Catatan Kecil",
+    subtitle: "",
+    image_url: "",
+    image_position: "right",
+    sections: [
+      {
+        title: "",
+        body: "Page kedua bisa berisi cerita, janji kecil, atau memori yang ingin dibuka setelah countdown selesai.",
+      },
+    ],
+  },
+];
+
+const emptyLetterForm = () => ({
+  title: "Birthday Gazette",
+  subtitle: "Surat kecil setelah countdown selesai.",
+  trigger_date: new Date().toISOString().split("T")[0],
+  audio_url: "",
+  is_active: true,
+  pages_json: JSON.stringify(defaultLetterPages, null, 2),
+});
+
 const adminSections: Array<{ id: AdminTab; label: string; icon: string }> = [
   { id: "notes", label: "Moods", icon: "📆" },
   { id: "minigames", label: "Mini-games", icon: "🎮" },
@@ -118,6 +155,7 @@ const adminSections: Array<{ id: AdminTab; label: string; icon: string }> = [
   { id: "inventory", label: "Inventory", icon: "🛡️" },
   { id: "coupleCalendar", label: "Couple Calendar", icon: "🌙" },
   { id: "hero", label: "Hero Copy", icon: "✨" },
+  { id: "letters", label: "Letters", icon: "News" },
   { id: "streakProtection", label: "Streak Requests", icon: "🔥" },
 ];
 
@@ -149,12 +187,15 @@ export default function AdminDashboard() {
   const [questBank, setQuestBank] = useState<any[]>([]);
   const [coupleEvents, setCoupleEvents] = useState<any[]>([]);
   const [heroMessages, setHeroMessages] = useState<any[]>([]);
+  const [letters, setLetters] = useState<any[]>([]);
   const [streakRequests, setStreakRequests] = useState<any[]>([]);
   const [rewardForm, setRewardForm] = useState(emptyRewardForm);
   const [questForm, setQuestForm] = useState(emptyQuestForm);
   const [eventForm, setEventForm] = useState(emptyEventForm);
   const [heroForm, setHeroForm] = useState(emptyHeroForm);
   const [heroEditingId, setHeroEditingId] = useState<string | null>(null);
+  const [letterForm, setLetterForm] = useState(emptyLetterForm);
+  const [letterEditingId, setLetterEditingId] = useState<string | null>(null);
   const [heartGrant, setHeartGrant] = useState({ amount: 10, note: "" });
   const [inventoryGrant, setInventoryGrant] = useState({
     item_type: "forgiveness_ticket",
@@ -177,6 +218,7 @@ export default function AdminDashboard() {
     inventory: 0,
     coupleCalendar: coupleEvents.length,
     hero: heroMessages.length,
+    letters: letters.length,
     streakProtection: streakRequests.filter((item) => item.status === "pending")
       .length,
   };
@@ -218,6 +260,9 @@ export default function AdminDashboard() {
     if (activeTab === "hero") {
       fetchHeroMessages();
     }
+    if (activeTab === "letters") {
+      fetchLetters();
+    }
     if (activeTab === "streakProtection") {
       fetchStreakProtectionRequests();
     }
@@ -227,6 +272,13 @@ export default function AdminDashboard() {
     const res = await fetch("/api/admin/hero-messages");
     const json = await readJsonResponse(res);
     setHeroMessages(json.heroMessages ?? []);
+    setEngagementMessage(json.error ?? json.details ?? "");
+  }
+
+  async function fetchLetters() {
+    const res = await fetch("/api/admin/letters");
+    const json = await readJsonResponse(res);
+    setLetters(json.letters ?? []);
     setEngagementMessage(json.error ?? json.details ?? "");
   }
 
@@ -601,6 +653,105 @@ export default function AdminDashboard() {
     fetchHeroMessages();
   }
 
+  function buildLetterPayload() {
+    let pages;
+    try {
+      pages = JSON.parse(letterForm.pages_json);
+    } catch {
+      throw new Error("Pages JSON belum valid.");
+    }
+
+    return {
+      title: letterForm.title,
+      subtitle: letterForm.subtitle,
+      trigger_date: letterForm.trigger_date,
+      audio_url: letterForm.audio_url,
+      is_active: letterForm.is_active,
+      pages,
+    };
+  }
+
+  async function handleSaveLetter() {
+    let payload;
+    try {
+      payload = buildLetterPayload();
+    } catch (error) {
+      setEngagementMessage(
+        error instanceof Error ? error.message : "Pages JSON belum valid.",
+      );
+      return;
+    }
+
+    const res = await fetch(
+      letterEditingId ? `/api/admin/letters/${letterEditingId}` : "/api/admin/letters",
+      {
+        method: letterEditingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+    const json = await readJsonResponse(res);
+    setEngagementMessage(
+      res.ok
+        ? letterEditingId
+          ? "Surat berhasil disimpan."
+          : "Surat berhasil dibuat."
+        : (json.details ?? json.error ?? "Gagal menyimpan surat."),
+    );
+    if (res.ok) {
+      setLetterEditingId(null);
+      setLetterForm(emptyLetterForm());
+      fetchLetters();
+    }
+  }
+
+  function handleEditLetter(letter: any) {
+    setLetterEditingId(letter.id);
+    setLetterForm({
+      title: letter.title ?? "",
+      subtitle: letter.subtitle ?? "",
+      trigger_date: letter.trigger_date?.slice(0, 10) ?? "",
+      audio_url: letter.audio_url ?? "",
+      is_active: letter.is_active !== false,
+      pages_json: JSON.stringify(
+        (letter.letter_pages ?? []).map((page: any) => ({
+          headline: page.headline ?? "",
+          subtitle: page.subtitle ?? "",
+          image_url: page.image_url ?? "",
+          image_position: page.image_position ?? "left",
+          sections: (page.letter_sections ?? []).map((section: any) => ({
+            title: section.title ?? "",
+            body: section.body ?? "",
+          })),
+        })),
+        null,
+        2,
+      ),
+    });
+    setEngagementMessage("Sedang edit surat. Simpan untuk update letter reader.");
+  }
+
+  function handleCancelLetterEdit() {
+    setLetterEditingId(null);
+    setLetterForm(emptyLetterForm());
+    setEngagementMessage("");
+  }
+
+  async function handleToggleLetter(letter: any) {
+    const res = await fetch(`/api/admin/letters/${letter.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: !letter.is_active }),
+    });
+    const json = await readJsonResponse(res);
+    setEngagementMessage(
+      res.ok
+        ? "Status surat berhasil diupdate."
+        : (json.details ?? json.error ?? "Gagal update surat."),
+    );
+    fetchLetters();
+  }
+
   async function handleStreakProtectionStatus(
     request: any,
     status: "approved" | "rejected",
@@ -786,6 +937,7 @@ export default function AdminDashboard() {
               "inventory",
               "coupleCalendar",
               "hero",
+              "letters",
               "streakProtection",
             ] as const
           ).map((tab) => (
@@ -807,6 +959,7 @@ export default function AdminDashboard() {
               {tab === "inventory" && "Inventory"}
               {tab === "coupleCalendar" && `Calendar (${coupleEvents.length})`}
               {tab === "hero" && `Hero (${heroMessages.length})`}
+              {tab === "letters" && `Letters (${letters.length})`}
               {tab === "streakProtection" &&
                 `Streak (${streakRequests.filter((item) => item.status === "pending").length})`}
             </button>
@@ -1353,6 +1506,71 @@ export default function AdminDashboard() {
                         title="Hapus"
                       >
                         🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            />
+          </div>
+        )}
+
+        {activeTab === "letters" && (
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Birthday Letter Reader</h2>
+            <AdminLetterForm
+              form={letterForm}
+              setForm={setLetterForm}
+              isEditing={Boolean(letterEditingId)}
+              onCancel={handleCancelLetterEdit}
+              onSubmit={handleSaveLetter}
+            />
+            {engagementMessage && (
+              <p style={styles.infoText}>{engagementMessage}</p>
+            )}
+            <SimpleList
+              items={letters}
+              empty="Belum ada surat."
+              render={(letter) => (
+                <div style={styles.gameHeader}>
+                  <div>
+                    <p style={styles.gameMeta}>
+                      {letter.trigger_date} ·{" "}
+                      {letter.is_active ? "active" : "inactive"} ·{" "}
+                      {(letter.letter_pages ?? []).length} pages
+                    </p>
+                    <h3 style={styles.gameTitle}>{letter.title}</h3>
+                    <p style={styles.gameMeta}>{letter.subtitle}</p>
+                  </div>
+                  <div style={styles.inlineActions}>
+                    <button
+                      type="button"
+                      style={styles.secondaryButtonCompact}
+                      onClick={() => handleEditLetter(letter)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      style={styles.primaryButtonCompact}
+                      onClick={() => handleToggleLetter(letter)}
+                    >
+                      {letter.is_active ? "Deactivate" : "Activate"}
+                    </button>
+                    {!letter.is_active && (
+                      <button
+                        type="button"
+                        style={styles.iconActionSmall}
+                        onClick={() =>
+                          handleDeleteResource(
+                            `/api/admin/letters/${letter.id}`,
+                            letter.title,
+                            fetchLetters,
+                          )
+                        }
+                        aria-label={`Hapus ${letter.title}`}
+                        title="Hapus"
+                      >
+                        Delete
                       </button>
                     )}
                   </div>
@@ -2096,6 +2314,108 @@ function AdminHeroForm({
         )}
         <button style={styles.primaryButton} onClick={onSubmit}>
           {isEditing ? "Save Hero Copy" : "Publish Hero Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdminLetterForm({
+  form,
+  setForm,
+  isEditing,
+  onCancel,
+  onSubmit,
+}: {
+  form: ReturnType<typeof emptyLetterForm>;
+  setForm: Dispatch<SetStateAction<ReturnType<typeof emptyLetterForm>>>;
+  isEditing: boolean;
+  onCancel: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div style={styles.formGrid}>
+      <FormIntro
+        title={isEditing ? "Edit surat birthday" : "Buat surat birthday"}
+        body="Surat aktif akan tersedia setelah tanggal trigger. Pages JSON dipakai supaya layout koran multi-page bisa diatur dari admin tanpa hardcode."
+      />
+      <Field label="Judul surat" hint="Nama surat yang tampil di reader.">
+        <input
+          style={styles.input}
+          placeholder="Birthday Gazette"
+          value={form.title}
+          onChange={(e) =>
+            setForm((current) => ({ ...current, title: e.target.value }))
+          }
+        />
+      </Field>
+      <Field label="Subtitle" hint="Opsional, tampil sebagai dek koran.">
+        <input
+          style={styles.input}
+          placeholder="Surat kecil setelah countdown selesai."
+          value={form.subtitle}
+          onChange={(e) =>
+            setForm((current) => ({ ...current, subtitle: e.target.value }))
+          }
+        />
+      </Field>
+      <div style={styles.twoColumn}>
+        <Field
+          label="Trigger date"
+          hint="Surat muncul otomatis kalau tanggal ini sudah lewat."
+        >
+          <input
+            style={styles.input}
+            type="date"
+            value={form.trigger_date}
+            onChange={(e) =>
+              setForm((current) => ({
+                ...current,
+                trigger_date: e.target.value,
+              }))
+            }
+          />
+        </Field>
+        <Field label="Audio URL" hint="Opsional. Diputar saat reader dibuka.">
+          <input
+            style={styles.input}
+            placeholder="/audio/page-flip.mp3"
+            value={form.audio_url}
+            onChange={(e) =>
+              setForm((current) => ({ ...current, audio_url: e.target.value }))
+            }
+          />
+        </Field>
+      </div>
+      <Field
+        label="Pages JSON"
+        hint='Format: [{"headline":"","subtitle":"","image_url":"","sections":[{"title":"","body":""}]}]'
+      >
+        <textarea
+          style={{ ...styles.textarea, fontFamily: "Consolas, monospace" }}
+          value={form.pages_json}
+          onChange={(e) =>
+            setForm((current) => ({ ...current, pages_json: e.target.value }))
+          }
+          rows={14}
+        />
+      </Field>
+      <CheckboxField
+        checked={form.is_active}
+        onChange={(checked) =>
+          setForm((current) => ({ ...current, is_active: checked }))
+        }
+        label="Publish sebagai surat aktif"
+        hint="Jika aktif, user bisa membaca setelah trigger date tercapai."
+      />
+      <div style={styles.formActions}>
+        {isEditing && (
+          <button type="button" style={styles.secondaryButton} onClick={onCancel}>
+            Cancel
+          </button>
+        )}
+        <button style={styles.primaryButton} onClick={onSubmit}>
+          {isEditing ? "Save Letter" : "Create Letter"}
         </button>
       </div>
     </div>

@@ -1,12 +1,6 @@
 .page {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(26, 15, 21, 0.86), rgba(26, 15, 21, 1)),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.03) 0 1px,
-      transparent 1px 96px
-    );
+  background: #fffaf5;
   color: var(--text);
   padding: 24px;
   overflow-x: hidden;
@@ -16,7 +10,7 @@
   width: min(1180px, 100%);
   margin: 0 auto 20px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 16px;
 }
@@ -27,104 +21,9 @@
   letter-spacing: 0;
 }
 
-.statusDock {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.statusPill {
-  min-width: 62px;
-  min-height: 50px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.statusPill::after {
-  content: "";
-  position: absolute;
-  inset: -60% auto auto -30%;
-  width: 62px;
-  height: 130px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.18),
-    transparent
-  );
-  transform: rotate(28deg);
-  animation: statusSweep 4.8s ease-in-out infinite;
-}
-
-.statusPill span {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(241, 185, 214, 0.38),
-      rgba(119, 215, 185, 0.18)
-    ),
-    rgba(241, 185, 214, 0.16);
-  color: #fff2f8;
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 1;
-  box-shadow: 0 0 20px rgba(241, 185, 214, 0.16);
-  animation: iconPulse 3.2s ease-in-out infinite;
-  position: relative;
-  z-index: 1;
-}
-
-.statusPill small {
-  color: #dbc2cf;
-  font-size: 12px;
-  font-weight: 900;
-  white-space: nowrap;
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes statusSweep {
-  0%,
-  62% {
-    transform: translateX(0) rotate(28deg);
-    opacity: 0;
-  }
-  76% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(220px) rotate(28deg);
-    opacity: 0;
-  }
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-1px) scale(1.04);
-  }
-}
-
 .eyebrow {
-  color: #f1b9d6;
-  font-size: 12px;
+  color: #8b7c6f;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -153,8 +52,10 @@
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: #30262c;
+  background: #fefdfb;
   color: var(--text);
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .hero {
@@ -166,15 +67,11 @@
   align-items: stretch;
   gap: 24px;
   padding: clamp(22px, 4vw, 42px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(229, 136, 191, 0.22),
-      rgba(87, 184, 255, 0.12)
-    ),
-    linear-gradient(180deg, #2d1820, #20181d);
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 253, 251, 0.8);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
@@ -186,7 +83,7 @@
 }
 
 .countdownTitle {
-  color: #f8d9e8;
+  color: #3d3d3d;
   font-size: clamp(22px, 4vw, 38px);
   font-weight: 900;
   line-height: 1;
@@ -194,7 +91,7 @@
 }
 
 .countdownMeta {
-  color: #d7b8c8;
+  color: #7a7a7a;
   font-size: 15px;
   font-weight: 800;
   line-height: 1.45;
@@ -216,15 +113,108 @@
 }
 
 .hero h2 {
-  font-size: clamp(24px, 4vw, 42px);
+  font-size: clamp(24px, 4vw, 64px);
   line-height: 1;
   margin-bottom: 12px;
 }
 
 .heroCopy p {
-  color: #d7b8c8;
+  color: #7a7a7a;
   font-size: 15px;
   line-height: 1.55;
+}
+
+.letterButton {
+  margin-top: 18px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 124, 111, 0.18);
+  background: #3d3d3d;
+  color: #fffaf5;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 6px 16px rgba(61, 61, 61, 0.12);
+}
+
+.letterTeaser {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 45;
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.letterTeaserButton {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  border: 1px solid rgba(139, 124, 111, 0.22);
+  border-radius: 50%;
+  background: #fff7ef;
+  color: #3d3d3d;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  box-shadow:
+    0 14px 34px rgba(61, 61, 61, 0.18),
+    0 0 0 8px rgba(255, 247, 239, 0.36);
+}
+
+.letterTeaserButton::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+  border: 1px solid rgba(212, 100, 111, 0.18);
+  animation: letterTeaserPulse 2.8s ease-in-out infinite;
+}
+
+.letterTeaserButton svg {
+  width: 29px;
+  height: 29px;
+}
+
+.letterTeaserSeal {
+  position: absolute;
+  right: 9px;
+  top: 9px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d4646f;
+  box-shadow: 0 2px 6px rgba(212, 100, 111, 0.32);
+}
+
+.letterTeaserBubble {
+  max-width: min(260px, calc(100vw - 48px));
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: rgba(61, 61, 61, 0.94);
+  color: #fffaf5;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+  box-shadow: 0 12px 28px rgba(61, 61, 61, 0.2);
+  pointer-events: auto;
+}
+
+@keyframes letterTeaserPulse {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.08;
+    transform: scale(1.16);
+  }
 }
 
 .countdown {
@@ -237,28 +227,32 @@
 .timeBox {
   min-height: 96px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 253, 251, 0.6);
+  border: 1px solid rgba(139, 124, 111, 0.12);
   display: grid;
   place-items: center;
   padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .timeBox strong {
   font-size: 34px;
   line-height: 1;
+  color: #3d3d3d;
 }
 
 .timeBox span {
-  color: #d7b8c8;
+  color: #8b7c6f;
   font-size: 12px;
   font-weight: 700;
 }
 
 .panel {
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(45, 24, 32, 0.72);
+  border-radius: 12px;
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.7);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .layout {
@@ -273,7 +267,7 @@
 .primaryColumn,
 .sideColumn {
   display: grid;
-  gap: 22px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -286,11 +280,12 @@
 .rewardBadge {
   padding: 8px 10px;
   border-radius: 8px;
-  background: rgba(119, 215, 185, 0.14);
-  color: #9debd2;
+  background: rgba(139, 124, 111, 0.1);
+  color: #8b7c6f;
   font-size: 12px;
   font-weight: 900;
   white-space: nowrap;
+  border: 1px solid rgba(139, 124, 111, 0.15);
 }
 
 .segmented {
@@ -299,7 +294,8 @@
   gap: 6px;
   padding: 5px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(139, 124, 111, 0.08);
+  border: 1px solid rgba(139, 124, 111, 0.12);
 }
 
 .segmentButton,
@@ -314,12 +310,15 @@
 
 .segmentButton {
   background: transparent;
-  color: #d7b8c8;
+  color: #7a7a7a;
+  transition: all 0.2s ease;
 }
 
 .segmentActive {
-  background: #f1b9d6;
-  color: #25141d;
+  background: #fefdfb;
+  color: #3d3d3d;
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .taskPane {
@@ -332,7 +331,7 @@
 }
 
 .panel {
-  padding: clamp(18px, 3vw, 26px);
+  padding: clamp(14px, 2.5vw, 20px);
 }
 
 .panelHeader {
@@ -340,34 +339,29 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .panelHeader h2 {
-  margin-top: 4px;
-  font-size: 22px;
+  margin-top: 2px;
+  font-size: 18px;
 }
 
 .moodBadge {
   padding: 8px 10px;
   border-radius: 8px;
-  background: rgba(119, 215, 185, 0.14);
-  color: #9debd2;
+  background: rgba(139, 124, 111, 0.1);
+  color: #8b7c6f;
   font-weight: 900;
   white-space: nowrap;
+  border: 1px solid rgba(139, 124, 111, 0.15);
 }
 
 .moodStage {
   min-height: 146px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background:
-    linear-gradient(
-      135deg,
-      rgba(229, 136, 191, 0.12),
-      rgba(119, 215, 185, 0.09)
-    ),
-    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.5);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -382,20 +376,22 @@
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 253, 251, 0.8);
+  border: 1px solid rgba(139, 124, 111, 0.15);
   font-size: 52px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .moodStage strong {
   display: block;
   font-size: clamp(42px, 8vw, 74px);
   line-height: 0.9;
+  color: #3d3d3d;
 }
 
 .moodStage span {
   display: block;
-  color: #f1b9d6;
+  color: #8b7c6f;
   font-size: 18px;
   font-weight: 900;
   margin-top: 8px;
@@ -407,7 +403,7 @@
 
 .moodSlider {
   --mood-progress: 77%;
-  --mood-color: #77d7b9;
+  --mood-color: #a89a8f;
   width: 100%;
   height: 44px;
   appearance: none;
@@ -421,9 +417,9 @@
   background: linear-gradient(
     90deg,
     var(--mood-color) 0 var(--mood-progress),
-    rgba(255, 255, 255, 0.12) var(--mood-progress) 100%
+    rgba(139, 124, 111, 0.12) var(--mood-progress) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(139, 124, 111, 0.15);
 }
 
 .moodSlider::-webkit-slider-thumb {
@@ -431,17 +427,17 @@
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: #f8d9e8;
-  border: 4px solid #2d1820;
+  background: #fefdfb;
+  border: 4px solid #a89a8f;
   margin-top: -11px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .moodSlider::-moz-range-track {
   height: 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(139, 124, 111, 0.12);
+  border: 1px solid rgba(139, 124, 111, 0.15);
 }
 
 .moodSlider::-moz-range-progress {
@@ -454,9 +450,9 @@
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: #f8d9e8;
-  border: 4px solid #2d1820;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  background: #fefdfb;
+  border: 4px solid #a89a8f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .sliderMeta {
@@ -472,11 +468,15 @@
   width: 100%;
   resize: vertical;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.6);
   color: var(--text);
   padding: 14px;
   font: inherit;
+}
+
+.note::placeholder {
+  color: rgba(139, 124, 111, 0.4);
 }
 
 .actionRow {
@@ -496,8 +496,15 @@
   min-height: 48px;
   border-radius: 8px;
   padding: 0 18px;
-  background: #77d7b9;
-  color: #10231e;
+  background: #a89a8f;
+  color: #fefdfb;
+  border: 1px solid #a89a8f;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #8b7c6f;
+  border-color: #8b7c6f;
 }
 
 .primaryButton:disabled {
@@ -510,53 +517,55 @@
   border-radius: 8px;
   padding: 0 12px;
   background: transparent;
-  color: #f1b9d6;
+  color: #8b7c6f;
+  border: 1px solid rgba(139, 124, 111, 0.2);
+  transition: all 0.2s ease;
+}
+
+.ghostButton:hover {
+  background: rgba(139, 124, 111, 0.08);
+  border-color: rgba(139, 124, 111, 0.3);
 }
 
 .questList,
 .calendarList {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .shopPreview {
-  min-height: 188px;
+  min-height: 140px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 18px;
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.5);
+  padding: 14px;
   display: grid;
   align-content: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .shopPreview strong {
-  font-size: 28px;
+  font-size: 20px;
   line-height: 1;
+  color: #3d3d3d;
 }
 
 .shopPreview p {
-  color: #d7b8c8;
+  color: #7a7a7a;
   line-height: 1.5;
 }
 
 .walletCard {
   display: grid;
-  gap: 8px;
-  padding: 14px;
+  gap: 6px;
+  padding: 10px;
   border-radius: 8px;
-  border: 1px solid rgba(241, 185, 214, 0.2);
-  background:
-    linear-gradient(
-      135deg,
-      rgba(241, 185, 214, 0.14),
-      rgba(119, 215, 185, 0.08)
-    ),
-    rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.6);
 }
 
 .walletLabel {
-  color: #f1b9d6;
+  color: #8b7c6f;
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
@@ -571,10 +580,11 @@
 .walletAmount strong {
   font-size: clamp(42px, 9vw, 58px);
   line-height: 0.9;
+  color: #3d3d3d;
 }
 
 .walletAmount span {
-  color: #f8d9e8;
+  color: #8b7c6f;
   font-size: 16px;
   font-weight: 900;
 }
@@ -585,18 +595,18 @@
   align-items: center;
   gap: 4px;
   min-height: 28px;
-  color: #f8d9e8;
+  color: #8b7c6f;
   font-size: 20px;
   line-height: 1;
 }
 
 .heartStack span {
-  filter: drop-shadow(0 4px 10px rgba(241, 185, 214, 0.16));
+  filter: drop-shadow(0 2px 4px rgba(139, 124, 111, 0.08));
 }
 
 .heartStack small {
   margin-left: 4px;
-  color: #f1b9d6;
+  color: #8b7c6f;
   font-size: 12px;
   font-weight: 900;
 }
@@ -611,9 +621,9 @@
 .latestRequest {
   min-height: 38px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #dac1ce;
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.5);
+  color: #7a7a7a;
   padding: 9px 10px;
   font-size: 12px;
   font-weight: 900;
@@ -621,7 +631,7 @@
 }
 
 .shopHint {
-  color: #dac1ce;
+  color: #7a7a7a;
   font-size: 13px;
   font-weight: 800;
   line-height: 1.4;
@@ -635,16 +645,18 @@
   gap: 14px;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.5);
 }
 
 .questCard h3 {
   font-size: 18px;
   margin-bottom: 8px;
+  color: #3d3d3d;
 }
 
 .questCard p {
-  color: #dac1ce;
+  color: #7a7a7a;
   line-height: 1.45;
 }
 
@@ -652,25 +664,32 @@
   min-height: 42px;
   border-radius: 8px;
   padding: 0 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text);
+  background: rgba(139, 124, 111, 0.1);
+  color: #8b7c6f;
   white-space: nowrap;
+  border: 1px solid rgba(139, 124, 111, 0.15);
+}
+
+.questCard button:hover {
+  background: rgba(139, 124, 111, 0.15);
 }
 
 .soft {
-  background: rgba(229, 136, 191, 0.1);
+  background: rgba(139, 124, 111, 0.06) !important;
+  border-color: rgba(139, 124, 111, 0.12) !important;
 }
 
 .gold {
-  background: rgba(243, 201, 105, 0.1);
+  background: rgba(139, 124, 111, 0.08) !important;
+  border-color: rgba(139, 124, 111, 0.15) !important;
 }
 
 .calendarRow {
   display: grid;
   gap: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.5);
   padding: 13px;
 }
 
@@ -681,37 +700,966 @@
 
 .calendarRow strong {
   font-size: 14px;
+  color: #3d3d3d;
 }
 
 .calendarRow span,
 .calendarRow time {
-  color: var(--text-muted);
+  color: #7a7a7a;
   font-size: 12px;
   font-weight: 800;
 }
 
-.gardenGrid {
+.gardenPanel {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gardenStageBadge {
+  min-width: 82px;
+  max-width: 128px;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(81, 132, 96, 0.22);
+  background: rgba(237, 248, 232, 0.82);
+  color: #3f7850;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.gardenBed {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(81, 132, 96, 0.18);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(233, 247, 242, 0.92) 0 54%,
+      rgba(230, 218, 196, 0.78) 54% 100%
+    ),
+    #f8fbf3;
+  padding: 18px;
+  box-shadow: inset 0 -24px 40px rgba(106, 82, 58, 0.08);
+}
+
+.gardenBedWilted {
+  border-color: rgba(166, 125, 87, 0.28);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(241, 234, 219, 0.94) 0 54%,
+      rgba(220, 198, 170, 0.82) 54% 100%
+    ),
+    #fbf6ed;
+}
+
+.gardenBedNight {
+  border-color: rgba(84, 105, 142, 0.26);
+  background:
+    radial-gradient(
+      circle at 86% 12%,
+      rgba(255, 255, 255, 0.28) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(255, 255, 255, 0.24) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 54% 8%,
+      rgba(255, 255, 255, 0.22) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(77, 94, 128, 0.94) 0 54%,
+      rgba(177, 171, 147, 0.82) 54% 100%
+    ),
+    #4d5e80;
+}
+
+.gardenBedNight.gardenBedWilted {
+  background:
+    radial-gradient(
+      circle at 86% 12%,
+      rgba(255, 255, 255, 0.22) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(255, 255, 255, 0.18) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(87, 91, 105, 0.94) 0 54%,
+      rgba(167, 151, 128, 0.84) 54% 100%
+    ),
+    #575b69;
+}
+
+.gardenSky {
+  position: absolute;
+  inset: 16px 18px auto;
+  height: 86px;
+  pointer-events: none;
+}
+
+.gardenSky span {
+  position: absolute;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    16px -4px 0 2px rgba(255, 255, 255, 0.66),
+    34px 1px 0 rgba(255, 255, 255, 0.58),
+    54px -2px 0 -1px rgba(255, 255, 255, 0.5);
+}
+
+.gardenSky span::before,
+.gardenSky span::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.gardenSky span::before {
+  left: 12px;
+  top: -8px;
+  width: 24px;
+  height: 22px;
+}
+
+.gardenSky span::after {
+  left: 32px;
+  top: -5px;
+  width: 28px;
+  height: 20px;
+}
+
+.gardenSky span:nth-child(1) {
+  width: 62px;
+  left: 8px;
+  top: 8px;
+}
+
+.gardenSky span:nth-child(2) {
+  width: 76px;
+  right: 112px;
+  top: 28px;
+}
+
+.gardenSky span:nth-child(3) {
+  width: 58px;
+  left: 46%;
+  top: 10px;
+  opacity: 0.82;
+}
+
+.gardenSky span:nth-child(3)::before {
+  width: 20px;
+  height: 18px;
+}
+
+.gardenBedNight .gardenSky span {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 253, 232, 0.86);
+  box-shadow:
+    24px 14px 0 rgba(255, 253, 232, 0.52),
+    74px 2px 0 rgba(255, 253, 232, 0.45),
+    126px 22px 0 rgba(255, 253, 232, 0.4);
+}
+
+.gardenBedNight .gardenSky span::before,
+.gardenBedNight .gardenSky span::after {
+  opacity: 0;
+}
+
+.plantScene {
+  position: relative;
+  z-index: 1;
+  min-height: 238px;
+  display: grid;
+  place-items: end center;
+  padding-top: 40px;
+  margin-bottom: 2px;
+}
+
+.sunMark {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: #f6c95f;
+  box-shadow:
+    0 0 0 10px rgba(246, 201, 95, 0.18),
+    0 0 28px rgba(246, 201, 95, 0.42),
+    0 0 54px rgba(246, 201, 95, 0.18);
+}
+
+.sunMark::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 12deg,
+    rgba(246, 201, 95, 0.46) 0 7%,
+    transparent 7% 14%,
+    rgba(246, 201, 95, 0.34) 14% 21%,
+    transparent 21% 28%,
+    rgba(246, 201, 95, 0.42) 28% 35%,
+    transparent 35% 42%,
+    rgba(246, 201, 95, 0.32) 42% 49%,
+    transparent 49% 56%,
+    rgba(246, 201, 95, 0.42) 56% 63%,
+    transparent 63% 70%,
+    rgba(246, 201, 95, 0.34) 70% 77%,
+    transparent 77% 84%,
+    rgba(246, 201, 95, 0.46) 84% 91%,
+    transparent 91% 100%
+  );
+  filter: blur(1px);
+  opacity: 0.8;
+  z-index: -1;
+}
+
+.sunMark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+}
+
+.gardenBedNight .sunMark {
+  background: #fff6d8;
+  box-shadow: 0 0 0 8px rgba(255, 246, 216, 0.12);
+}
+
+.gardenBedNight .sunMark::before {
+  opacity: 0;
+}
+
+.gardenBedNight .sunMark::after {
+  inset: -2px -8px 2px 8px;
+  background: #4d5e80;
+  opacity: 1;
+}
+
+.gardenBedNight.gardenBedWilted .sunMark::after {
+  background: #575b69;
+}
+
+.plantPot {
+  position: relative;
+  width: min(190px, 72%);
+  height: 176px;
+  display: grid;
+  place-items: end center;
+}
+
+.plantPot::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 122px;
+  height: 70px;
+  border-radius: 12px 12px 26px 26px;
+  background: linear-gradient(180deg, #ca7861, #a95d4a);
+  border: 1px solid rgba(111, 69, 48, 0.24);
+  box-shadow: inset 0 -14px 18px rgba(93, 46, 33, 0.14);
+}
+
+.plantPot::after {
+  content: "";
+  position: absolute;
+  bottom: 62px;
+  width: 144px;
+  height: 22px;
+  border-radius: 999px;
+  background: #d8896e;
+  border: 1px solid rgba(111, 69, 48, 0.2);
+}
+
+.plantSoil {
+  position: absolute;
+  z-index: 2;
+  bottom: 66px;
+  width: 112px;
+  height: 14px;
+  border-radius: 999px;
+  background: #6f4f35;
+}
+
+.plantStem {
+  position: absolute;
+  z-index: 3;
+  bottom: 72px;
+  width: 9px;
+  height: var(--garden-stem-height);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6fb36d, #3f8850);
+  transform-origin: bottom center;
+  transition:
+    height 0.35s ease,
+    transform 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.plantLeafLeft,
+.plantLeafRight {
+  position: absolute;
+  z-index: 4;
+  bottom: var(--garden-leaf-bottom);
+  width: 44px;
+  height: 24px;
+  border-radius: 999px 0 999px 0;
+  background: #62a85f;
+  opacity: 0;
+  transition:
+    opacity 0.25s ease,
+    transform 0.3s ease;
+}
+
+.plantLeafLeft {
+  margin-left: -38px;
+  transform: rotate(-28deg) scale(0.9);
+}
+
+.plantLeafRight {
+  margin-left: 38px;
+  transform: scaleX(-1) rotate(-28deg) scale(0.9);
+}
+
+.plantBud,
+.flowerPetalTop,
+.flowerPetalLeft,
+.flowerPetalRight,
+.flowerCore {
+  position: absolute;
+  z-index: 5;
+  bottom: var(--garden-bloom-bottom);
+  left: 50%;
+  opacity: 0;
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s ease;
+}
+
+.plantBud {
+  width: 32px;
+  height: 38px;
+  margin-left: -16px;
+  border-radius: 18px 18px 12px 12px;
+  background: linear-gradient(
+    180deg,
+    var(--garden-accent-soft),
+    var(--garden-accent)
+  );
+  transform: scale(0.7);
+}
+
+.flowerPetalTop,
+.flowerPetalLeft,
+.flowerPetalRight {
+  width: 38px;
+  height: 42px;
+  margin-left: -19px;
+  border-radius: 999px 999px 18px 18px;
+  background: linear-gradient(
+    180deg,
+    var(--garden-accent-soft),
+    var(--garden-accent)
+  );
+  transform-origin: 50% 78%;
+}
+
+.flowerPetalTop {
+  transform: translateY(-18px) scale(0.85);
+}
+
+.flowerPetalLeft {
+  transform: translate(-18px, 0) rotate(-42deg) scale(0.85);
+}
+
+.flowerPetalRight {
+  transform: translate(18px, 0) rotate(42deg) scale(0.85);
+}
+
+.flowerCore {
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  border-radius: 999px;
+  background: var(--garden-core);
+  transform: translateY(2px) scale(0.9);
+}
+
+.flowerTypeDaisy .flowerPetalTop,
+.flowerTypeDaisy .flowerPetalLeft,
+.flowerTypeDaisy .flowerPetalRight {
+  width: 28px;
+  height: 36px;
+  margin-left: -14px;
+  border-radius: 999px;
+}
+
+.flowerTypeDaisy .flowerPetalTop {
+  transform: translateY(-20px) scale(0.9);
+}
+
+.flowerTypeDaisy .flowerPetalLeft {
+  transform: translate(-18px, 1px) rotate(-62deg) scale(0.9);
+}
+
+.flowerTypeDaisy .flowerPetalRight {
+  transform: translate(18px, 1px) rotate(62deg) scale(0.9);
+}
+
+.flowerTypeBluebell .plantBud,
+.flowerTypeBluebell .flowerPetalTop,
+.flowerTypeBluebell .flowerPetalLeft,
+.flowerTypeBluebell .flowerPetalRight {
+  border-radius: 18px 18px 999px 999px;
+}
+
+.flowerTypeBluebell .flowerPetalTop {
+  transform: translateY(-8px) scale(0.9);
+}
+
+.flowerTypeBluebell .flowerPetalLeft {
+  transform: translate(-14px, 7px) rotate(-22deg) scale(0.92);
+}
+
+.flowerTypeBluebell .flowerPetalRight {
+  transform: translate(14px, 7px) rotate(22deg) scale(0.92);
+}
+
+.flowerTypeClover .flowerPetalTop,
+.flowerTypeClover .flowerPetalLeft,
+.flowerTypeClover .flowerPetalRight {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+}
+
+.flowerTypeClover .flowerPetalTop {
+  transform: translateY(-16px) scale(0.88);
+}
+
+.flowerTypeClover .flowerPetalLeft {
+  transform: translate(-16px, 2px) rotate(-34deg) scale(0.88);
+}
+
+.flowerTypeClover .flowerPetalRight {
+  transform: translate(16px, 2px) rotate(34deg) scale(0.88);
+}
+
+.flowerTypeCosmos .flowerPetalTop,
+.flowerTypeCosmos .flowerPetalLeft,
+.flowerTypeCosmos .flowerPetalRight {
+  width: 34px;
+  height: 45px;
+  border-radius: 999px 999px 8px 8px;
+}
+
+.flowerTypeCosmos .flowerPetalTop {
+  transform: translateY(-20px) rotate(8deg) scale(0.9);
+}
+
+.flowerTypeCosmos .flowerPetalLeft {
+  transform: translate(-20px, 1px) rotate(-54deg) scale(0.88);
+}
+
+.flowerTypeCosmos .flowerPetalRight {
+  transform: translate(20px, 1px) rotate(54deg) scale(0.88);
+}
+
+.flowerTypeSun .flowerPetalTop,
+.flowerTypeSun .flowerPetalLeft,
+.flowerTypeSun .flowerPetalRight {
+  width: 30px;
+  height: 46px;
+  border-radius: 999px 999px 10px 10px;
+}
+
+.flowerTypeSun .flowerPetalTop {
+  transform: translateY(-21px) scale(0.88);
+}
+
+.flowerTypeSun .flowerPetalLeft {
+  transform: translate(-21px, 0) rotate(-58deg) scale(0.88);
+}
+
+.flowerTypeSun .flowerPetalRight {
+  transform: translate(21px, 0) rotate(58deg) scale(0.88);
+}
+
+.gardenStage0 .plantStem {
+  height: 10px;
+  opacity: 0.35;
+}
+
+.gardenStage0 .plantLeafLeft,
+.gardenStage0 .plantLeafRight,
+.gardenStage0 .plantBud,
+.gardenStage0 .flowerPetalTop,
+.gardenStage0 .flowerPetalLeft,
+.gardenStage0 .flowerPetalRight,
+.gardenStage0 .flowerCore {
+  opacity: 0;
+}
+
+.gardenStage1 .plantStem,
+.gardenStage2 .plantStem {
+  opacity: 1;
+}
+
+.gardenStage2 .plantLeafLeft,
+.gardenStage3 .plantLeafLeft,
+.gardenStage4 .plantLeafLeft,
+.gardenStage5 .plantLeafLeft,
+.gardenStage6 .plantLeafLeft,
+.gardenStage7 .plantLeafLeft,
+.gardenStage3 .plantLeafRight,
+.gardenStage4 .plantLeafRight,
+.gardenStage5 .plantLeafRight,
+.gardenStage6 .plantLeafRight,
+.gardenStage7 .plantLeafRight {
+  opacity: 1;
+}
+
+.gardenStage4 .plantLeafLeft,
+.gardenStage4 .plantLeafRight,
+.gardenStage5 .plantLeafLeft,
+.gardenStage5 .plantLeafRight,
+.gardenStage6 .plantLeafLeft,
+.gardenStage6 .plantLeafRight,
+.gardenStage7 .plantLeafLeft,
+.gardenStage7 .plantLeafRight {
+  transform: rotate(-24deg) scale(1);
+}
+
+.gardenStage4 .plantLeafRight,
+.gardenStage5 .plantLeafRight,
+.gardenStage6 .plantLeafRight,
+.gardenStage7 .plantLeafRight {
+  transform: scaleX(-1) rotate(-24deg) scale(1);
+}
+
+.gardenStage5 .plantBud,
+.gardenStage6 .plantBud {
+  opacity: 1;
+  transform: scale(0.86);
+}
+
+.gardenStage7 .flowerPetalTop,
+.gardenStage7 .flowerPetalLeft,
+.gardenStage7 .flowerPetalRight,
+.gardenStage7 .flowerCore {
+  opacity: 1;
+}
+
+.gardenBedWilted .plantStem {
+  background: linear-gradient(180deg, #9a9f68, #777a43);
+  transform: rotate(6deg);
+}
+
+.gardenBedWilted .plantLeafLeft,
+.gardenBedWilted .plantLeafRight,
+.gardenBedWilted .plantBud,
+.gardenBedWilted .flowerPetalTop,
+.gardenBedWilted .flowerPetalLeft,
+.gardenBedWilted .flowerPetalRight {
+  filter: saturate(0.65);
+}
+
+.gardenStatus {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 253, 251, 0.72);
+  border: 1px solid rgba(81, 132, 96, 0.14);
+}
+
+.gardenStatus strong {
+  color: #2f4f3a;
+  font-size: 15px;
+}
+
+.gardenStatus span {
+  color: #6d725f;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.growthTrack {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.growthStep,
+.growthStepActive {
+  min-width: 0;
+  height: 8px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 0;
+}
+
+.growthStep {
+  background: rgba(255, 253, 251, 0.7);
+}
+
+.growthStepActive {
+  background: #518460;
+  box-shadow: 0 4px 10px rgba(81, 132, 96, 0.18);
+}
+
+.gardenBloomShelf {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+  padding: 12px 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(81, 132, 96, 0.12);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 253, 251, 0.5),
+      rgba(239, 249, 232, 0.58)
+    ),
+    rgba(255, 253, 251, 0.48);
+}
+
+.gardenBloomShelf::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(99, 126, 73, 0.16);
+}
+
+.bloomSlot,
+.bloomSlotActive {
+  position: relative;
+  min-height: 58px;
+  border-radius: 8px;
+  border: 0;
+  background: linear-gradient(180deg, #c98668, #aa654d) center bottom 4px / 28px
+    16px no-repeat;
+}
+
+.bloomSlot::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 18px;
+  height: 10px;
+  border-radius: 999px 999px 0 0;
+  border: 2px dashed rgba(81, 132, 96, 0.18);
+  border-bottom: 0;
+  transform: translateX(-50%);
+}
+
+.bloomSlotActive::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 5px;
+  height: 25px;
+  border-radius: 999px;
+  background: #4d9255;
+  transform: translateX(-50%);
+  box-shadow:
+    -9px 8px 0 -4px #6fb36d,
+    9px 12px 0 -4px #6fb36d;
+}
+
+.bloomSlotActive::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 35px;
+  width: 29px;
+  height: 29px;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      var(--bloom-core) 0 28%,
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 50% 8%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 50% 92%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 8% 50%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 92% 50%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    );
+  transform: translateX(-50%);
+  filter: drop-shadow(0 3px 4px rgba(81, 132, 96, 0.12));
+}
+
+.bloomSlotActive:nth-child(2n)::after {
+  transform: translateX(-50%) rotate(12deg);
+}
+
+.bloomSlotActive:nth-child(3n)::after {
+  width: 25px;
+  height: 25px;
+  bottom: 38px;
+}
+
+.bloomTypeDaisy::after {
+  width: 31px;
+  height: 31px;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      var(--bloom-core) 0 24%,
+      transparent 26%
+    ),
+    radial-gradient(
+      ellipse at 50% 4%,
+      var(--bloom-accent) 0 18%,
+      transparent 20%
+    ),
+    radial-gradient(
+      ellipse at 50% 96%,
+      var(--bloom-accent) 0 18%,
+      transparent 20%
+    ),
+    radial-gradient(
+      ellipse at 4% 50%,
+      var(--bloom-accent) 0 18%,
+      transparent 20%
+    ),
+    radial-gradient(
+      ellipse at 96% 50%,
+      var(--bloom-accent) 0 18%,
+      transparent 20%
+    ),
+    radial-gradient(
+      ellipse at 18% 18%,
+      var(--bloom-accent-soft) 0 16%,
+      transparent 18%
+    ),
+    radial-gradient(
+      ellipse at 82% 18%,
+      var(--bloom-accent-soft) 0 16%,
+      transparent 18%
+    ),
+    radial-gradient(
+      ellipse at 18% 82%,
+      var(--bloom-accent-soft) 0 16%,
+      transparent 18%
+    ),
+    radial-gradient(
+      ellipse at 82% 82%,
+      var(--bloom-accent-soft) 0 16%,
+      transparent 18%
+    );
+}
+
+.bloomTypeBluebell::after {
+  width: 27px;
+  height: 31px;
+  border-radius: 16px 16px 999px 999px;
+  background:
+    radial-gradient(
+      circle at 50% 28%,
+      var(--bloom-core) 0 16%,
+      transparent 18%
+    ),
+    linear-gradient(180deg, var(--bloom-accent-soft), var(--bloom-accent));
+  transform: translateX(-50%) rotate(8deg);
+}
+
+.bloomTypeClover::after {
+  width: 29px;
+  height: 29px;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      var(--bloom-core) 0 20%,
+      transparent 22%
+    ),
+    radial-gradient(
+      circle at 50% 12%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 18% 46%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 82% 46%,
+      var(--bloom-accent-soft) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 50% 84%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    );
+}
+
+.bloomTypeCosmos::after {
+  width: 32px;
+  height: 32px;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      var(--bloom-core) 0 22%,
+      transparent 24%
+    ),
+    radial-gradient(
+      ellipse at 50% 5%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      ellipse at 50% 95%,
+      var(--bloom-accent-soft) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      ellipse at 5% 50%,
+      var(--bloom-accent) 0 24%,
+      transparent 25%
+    ),
+    radial-gradient(
+      ellipse at 95% 50%,
+      var(--bloom-accent-soft) 0 24%,
+      transparent 25%
+    );
+}
+
+.bloomTypeSun::after {
+  width: 34px;
+  height: 34px;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      var(--bloom-core) 0 25%,
+      transparent 27%
+    ),
+    conic-gradient(
+      from 8deg,
+      var(--bloom-accent) 0 8%,
+      transparent 8% 12%,
+      var(--bloom-accent-soft) 12% 20%,
+      transparent 20% 25%,
+      var(--bloom-accent) 25% 33%,
+      transparent 33% 38%,
+      var(--bloom-accent-soft) 38% 46%,
+      transparent 46% 50%,
+      var(--bloom-accent) 50% 58%,
+      transparent 58% 63%,
+      var(--bloom-accent-soft) 63% 71%,
+      transparent 71% 76%,
+      var(--bloom-accent) 76% 84%,
+      transparent 84% 88%,
+      var(--bloom-accent-soft) 88% 96%,
+      transparent 96% 100%
+    );
+}
+
+.gardenTools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.gardenTile {
+.gardenTools button {
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 124, 111, 0.14);
+  background: rgba(255, 253, 251, 0.68);
+  color: #5f6753;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 11px;
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.gardenTools button:hover {
+  border-color: rgba(81, 132, 96, 0.28);
+  background: rgba(237, 248, 232, 0.76);
+}
+
+.gardenGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.gardenTile,
+.gardenTileEmpty {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(119, 215, 185, 0.16),
-      rgba(87, 184, 255, 0.08)
-    ),
-    rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(119, 215, 185, 0.18);
-  color: #b8ffe9;
+  background: rgba(255, 253, 251, 0.6);
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  color: #518460;
   font-weight: 900;
-  font-size: 22px;
+  font-size: 20px;
+}
+
+.gardenTileEmpty {
+  background: rgba(139, 124, 111, 0.05);
+  border-style: dashed;
 }
 
 .calendarRow {
@@ -723,7 +1671,7 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(10, 6, 9, 0.72);
+  background: rgba(45, 42, 39, 0.64);
   display: grid;
   place-items: center;
   padding: 18px;
@@ -733,11 +1681,11 @@
   width: min(640px, 100%);
   max-height: min(760px, calc(100vh - 36px));
   overflow: auto;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: #24151c;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.95);
   padding: clamp(18px, 3vw, 26px);
-  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.42);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
 .modalHeader,
@@ -755,6 +1703,7 @@
 .modalHeader h2 {
   margin-top: 4px;
   font-size: 28px;
+  color: #3d3d3d;
 }
 
 .modalWallet {
@@ -763,14 +1712,8 @@
   margin-bottom: 16px;
   padding: 14px;
   border-radius: 8px;
-  border: 1px solid rgba(241, 185, 214, 0.2);
-  background:
-    linear-gradient(
-      135deg,
-      rgba(241, 185, 214, 0.14),
-      rgba(119, 215, 185, 0.08)
-    ),
-    rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.6);
 }
 
 .modalWallet > div:first-child {
@@ -781,7 +1724,7 @@
 }
 
 .modalWallet > div:first-child span {
-  color: #f1b9d6;
+  color: #8b7c6f;
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
@@ -790,10 +1733,11 @@
 .modalWallet strong {
   font-size: 42px;
   line-height: 0.9;
+  color: #3d3d3d;
 }
 
 .modalWallet p {
-  color: #dac1ce;
+  color: #7a7a7a;
   font-size: 13px;
   font-weight: 900;
 }
@@ -809,8 +1753,8 @@
   width: 100%;
   min-height: 76px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.5);
   color: var(--text);
   padding: 14px;
   display: grid;
@@ -823,8 +1767,8 @@
 }
 
 .rewardOptionActive {
-  border-color: rgba(119, 215, 185, 0.6);
-  background: rgba(119, 215, 185, 0.12);
+  border-color: rgba(139, 124, 111, 0.3);
+  background: rgba(255, 253, 251, 0.8);
 }
 
 .rewardOption > span,
@@ -836,6 +1780,7 @@
 .rewardOption strong,
 .rewardOptionActive strong {
   font-size: 15px;
+  color: #3d3d3d;
 }
 
 .rewardOption small,
@@ -843,7 +1788,7 @@
 .rewardOption em,
 .rewardOptionActive em,
 .modalActions p {
-  color: var(--text-muted);
+  color: #7a7a7a;
   font-size: 12px;
   font-style: normal;
   font-weight: 900;
@@ -858,24 +1803,24 @@
 
 .rewardOption em span,
 .rewardOptionActive em span {
-  color: #f8d9e8;
+  color: #8b7c6f;
   font-size: 13px;
 }
 
 .rewardOption em .rewardAffordable,
 .rewardOptionActive em .rewardAffordable {
-  color: #9debd2;
+  color: #8b7c6f;
 }
 
 .rewardOption em .rewardShort,
 .rewardOptionActive em .rewardShort {
-  color: #ffb1b1;
+  color: #a89a8f;
 }
 
 .reasonField {
   display: grid;
   gap: 8px;
-  color: #f1b9d6;
+  color: #8b7c6f;
   font-size: 13px;
   font-weight: 900;
 }
@@ -884,8 +1829,8 @@
   width: 100%;
   resize: vertical;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.6);
   color: var(--text);
   padding: 14px;
   font: inherit;
@@ -906,7 +1851,6 @@
   }
 
   .sideColumn {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     align-items: stretch;
   }
@@ -1047,7 +1991,7 @@
 
 @media (max-width: 920px) {
   .page {
-    padding: 18px;
+    padding: 14px;
   }
 
   .hero,
@@ -1065,9 +2009,30 @@
     text-align: left;
     max-width: 560px;
   }
+
 }
 
 @media (max-width: 640px) {
+  .letterTeaser {
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .letterTeaserButton {
+    width: 56px;
+    height: 56px;
+  }
+
+  .letterTeaserButton svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .letterTeaserBubble {
+    max-width: min(230px, calc(100vw - 36px));
+    font-size: 12px;
+  }
+
   .topbar,
   .panelHeader,
   .actionRow,
@@ -1080,30 +2045,7 @@
   }
 
   .topbar {
-    gap: 14px;
-  }
-
-  .statusDock {
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .statusPill {
-    min-width: 0;
-    min-height: 54px;
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 5px;
-    padding: 8px 6px;
-  }
-
-  .statusPill small {
-    font-size: 11px;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    gap: 10px;
   }
 
   .moodStage {
@@ -1114,48 +2056,48 @@
 
   .countdown {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
+    gap: 6px;
   }
 
   .hero {
     min-height: auto;
-    gap: 14px;
-    padding: 14px;
-    margin-bottom: 16px;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
   }
 
   .hero h1 {
-    font-size: clamp(42px, 15vw, 64px);
+    font-size: clamp(36px, 13vw, 56px);
   }
 
   .countdownTitle {
-    font-size: clamp(18px, 6vw, 26px);
+    font-size: clamp(16px, 5vw, 22px);
   }
 
   .countdownMeta {
-    margin-top: 8px;
-    font-size: 12px;
+    margin-top: 6px;
+    font-size: 11px;
   }
 
   .heroCopy h2 {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .heroCopy p {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .timeBox {
-    min-height: 64px;
-    padding: 7px 4px;
+    min-height: 56px;
+    padding: 6px 4px;
   }
 
   .timeBox strong {
-    font-size: 23px;
+    font-size: 20px;
   }
 
   .todayPanel {
-    gap: 10px;
+    gap: 8px;
   }
 
   .rewardBadge {
@@ -1167,23 +2109,20 @@
   }
 
   .sideColumn {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1fr;
   }
 
   .sideColumn::-webkit-scrollbar {
-    display: none;
+    display: auto;
   }
 
   .sideColumn > .panel {
-    flex: 0 0 min(84vw, 340px);
-    min-height: 238px;
-    scroll-snap-align: start;
+    flex: initial;
+    min-height: auto;
+    scroll-snap-align: auto;
+    padding: clamp(12px, 2vw, 16px);
   }
 
   .rewardOption,

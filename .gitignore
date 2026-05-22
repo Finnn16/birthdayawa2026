@@ -5,3 +5,4 @@ node_modules
 .pi
 .next/
 AGENTS.md
+app/test

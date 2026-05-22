@@ -1,0 +1,297 @@
+.card {
+  width: 100%;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.8);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.card:focus-visible {
+  outline: 2px solid rgba(139, 124, 111, 0.4);
+  outline-offset: 3px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #fefdfb;
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.expandIcon {
+  display: none;
+}
+
+.logoutButton {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 124, 111, 0.15);
+  background: rgba(255, 253, 251, 0.6);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+  border-color: rgba(139, 124, 111, 0.3);
+  background: rgba(139, 124, 111, 0.1);
+}
+
+.logoutButton:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.logoutButton svg {
+  width: 19px;
+  height: 19px;
+}
+
+.logoutSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(139, 124, 111, 0.15);
+  border-top-color: #8b7c6f;
+  animation: profileSpin 0.8s linear infinite;
+}
+
+@keyframes profileSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.identity h2 {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity p {
+  color: #8b7c6f;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details {
+  display: grid;
+  gap: 16px;
+}
+
+.progressBlock {
+  display: grid;
+  gap: 5px;
+}
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(139, 124, 111, 0.12);
+  border: 1px solid rgba(139, 124, 111, 0.1);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #a89a8f;
+}
+
+.progressBlock p {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.tag {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(168, 154, 143, 0.15);
+  color: #8b7c6f;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  border: 1px solid rgba(139, 124, 111, 0.2);
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 0;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.statIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.statText {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.statText strong,
+.statText small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statText strong {
+  color: #3d3d3d;
+  font-size: 13px;
+  line-height: 1.05;
+}
+
+.statText small {
+  color: #7a7a7a;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+@media (max-width: 720px) {
+  .card {
+    gap: 0;
+    padding: 12px;
+    cursor: pointer;
+  }
+
+  .avatar,
+  .logoutButton {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .identity h2 {
+    font-size: 16px;
+  }
+
+  .identity p {
+    font-size: 12px;
+  }
+
+  .expandIcon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    display: grid;
+    place-items: center;
+    color: #8b7c6f;
+    transition: transform 180ms ease;
+  }
+
+  .expandIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .expanded .expandIcon {
+    transform: rotate(180deg);
+  }
+
+  .details {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition:
+      max-height 220ms ease,
+      opacity 160ms ease,
+      transform 180ms ease,
+      margin-top 180ms ease;
+  }
+
+  .expanded .details {
+    max-height: 260px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    margin-top: 14px;
+  }
+
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}

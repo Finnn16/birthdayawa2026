@@ -13,7 +13,7 @@ export function LoadingSpinner({ label = "loading..." }: { label?: string }) {
         style={{
           width: 40,
           height: 40,
-          border: "3px solid rgba(200, 255, 87, 0.2)",
+          border: "3px solid rgba(168, 154, 143, 0.2)",
           borderTop: "3px solid var(--text)",
           borderRadius: "50%",
           animation: "spin 1s linear infinite",

@@ -3,9 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {
@@ -34,6 +32,7 @@ model User {
   gardenItems                GardenItem[]
   coupleEventsCreated        CoupleEvent[]         @relation("CoupleEventCreator")
   heroMessagesCreated        HeroMessage[]          @relation("HeroMessageCreator")
+  lettersCreated             Letter[]              @relation("LetterCreator")
 
   @@index([phoneNumber])
   @@map("users")
@@ -334,4 +333,55 @@ model HeroMessage {
 
   @@index([isActive, activeDate(sort: Desc), createdAt(sort: Desc)])
   @@map("hero_messages")
+}
+
+model Letter {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  subtitle      String?
+  triggerDate   DateTime     @map("trigger_date") @db.Date
+  audioUrl      String?      @map("audio_url")
+  isActive      Boolean      @default(true) @map("is_active")
+  metadataJson  Json?        @map("metadata_json")
+  createdBy     String?      @map("created_by") @db.Uuid
+  createdAt     DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator       User?        @relation("LetterCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  pages         LetterPage[]
+
+  @@index([isActive, triggerDate(sort: Desc)])
+  @@map("letters")
+}
+
+model LetterPage {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  letterId        String            @map("letter_id") @db.Uuid
+  pageNumber      Int               @map("page_number")
+  headline        String
+  subtitle        String?
+  imageUrl        String?           @map("image_url")
+  imagePosition   String?           @default("left") @map("image_position")
+  createdAt       DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  letter          Letter            @relation(fields: [letterId], references: [id], onDelete: Cascade)
+  sections        LetterSection[]
+
+  @@unique([letterId, pageNumber])
+  @@index([letterId])
+  @@map("letter_pages")
+}
+
+model LetterSection {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pageId          String       @map("page_id") @db.Uuid
+  sectionNumber   Int          @map("section_number")
+  title           String?
+  body            String
+  createdAt       DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  page            LetterPage   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, sectionNumber])
+  @@index([pageId])
+  @@map("letter_sections")
 }

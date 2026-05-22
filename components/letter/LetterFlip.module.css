@@ -1,0 +1,320 @@
+/**
+ * LetterFlip Styling
+ * Modal container, flip animation, controls, and responsive design
+ */
+
+/* BACKDROP */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.54);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* MODAL CONTAINER */
+.modalContainer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 28px 72px;
+  overflow: hidden;
+}
+
+/* LETTER WRAPPER - Main book-like container */
+.letterWrapper {
+  width: 100%;
+  max-width: 1040px;
+  height: min(1120px, calc(100vh - 56px));
+  position: relative;
+  display: block;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* HEADER */
+.header {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 5;
+  width: min(100%, 980px);
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 22px;
+  pointer-events: none;
+}
+
+.pageIndicator {
+  font-size: 13px;
+  color: #5f554d;
+  letter-spacing: 1px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 250, 245, 0.78);
+  border: 1px solid rgba(208, 197, 186, 0.72);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.closeButton {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(26, 26, 26, 0.86);
+  color: #fffaf5;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+}
+
+.closeButton:hover {
+  background: #1a1a1a;
+  color: #fffaf5;
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* PAGE CONTAINER */
+.pageContainer {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pageContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.pageWrapper {
+  width: 100%;
+  padding: 0;
+  contain: layout paint;
+  will-change: opacity;
+}
+
+.pageInner {
+  padding: 0;
+  box-shadow: none;
+}
+
+/* CONTROLS */
+.controls {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.controlCenter {
+  display: none;
+}
+
+.navButton {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(72px, 10vw, 120px);
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  font-size: 0;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  line-height: 1;
+  pointer-events: auto;
+  box-shadow: none;
+}
+
+.navButton:hover:not(:disabled) {
+  background: linear-gradient(
+    90deg,
+    rgba(26, 26, 26, 0.035),
+    rgba(26, 26, 26, 0)
+  );
+}
+
+.navButton:active:not(:disabled) {
+  background: linear-gradient(
+    90deg,
+    rgba(26, 26, 26, 0.06),
+    rgba(26, 26, 26, 0)
+  );
+}
+
+.navButton:disabled {
+  opacity: 0;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.prevButton {
+  left: 0;
+}
+
+.nextButton {
+  right: 0;
+}
+
+.nextButton:hover:not(:disabled),
+.nextButton:active:not(:disabled) {
+  background: linear-gradient(
+    270deg,
+    rgba(26, 26, 26, 0.035),
+    rgba(26, 26, 26, 0)
+  );
+}
+
+.nextButton:active:not(:disabled) {
+  background: linear-gradient(
+    270deg,
+    rgba(26, 26, 26, 0.06),
+    rgba(26, 26, 26, 0)
+  );
+}
+
+/* RESPONSIVE - TABLET */
+@media (max-width: 1024px) {
+  .modalContainer {
+    padding: 24px 56px;
+  }
+
+  .letterWrapper {
+    max-width: 920px;
+  }
+
+  .header {
+    padding: 0 18px;
+  }
+
+  .pageWrapper {
+    padding: 0;
+  }
+
+  .navButton {
+    width: clamp(62px, 9vw, 96px);
+    height: 100%;
+  }
+
+  .prevButton {
+    left: 0;
+  }
+
+  .nextButton {
+    right: 0;
+  }
+}
+
+/* RESPONSIVE - MOBILE */
+@media (max-width: 640px) {
+  .modalContainer {
+    align-items: flex-start;
+    padding: 18px 10px;
+  }
+
+  .letterWrapper {
+    width: min(100%, 560px);
+    height: calc(100vh - 36px);
+  }
+
+  .header {
+    top: 12px;
+    padding: 0 12px;
+  }
+
+  .pageIndicator {
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+
+  .closeButton {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .pageWrapper {
+    padding: 0;
+  }
+
+  .pageContainer {
+    /* Better scrolling on mobile */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .navButton {
+    top: 0;
+    width: 56px;
+    height: 100%;
+    padding: 0;
+  }
+
+  .prevButton {
+    left: 0;
+  }
+
+  .nextButton {
+    right: 0;
+  }
+}
+
+/* RESPONSIVE - SMALL MOBILE */
+@media (max-width: 480px) {
+  .letterWrapper {
+    width: 100%;
+  }
+
+  .header {
+    padding: 0 10px;
+  }
+
+  .pageWrapper {
+    padding: 0;
+  }
+
+  .navButton {
+    width: 48px;
+    height: 100%;
+  }
+
+  .prevButton {
+    left: 0;
+  }
+
+  .nextButton {
+    right: 0;
+  }
+}
+
