@@ -10,6 +10,9 @@ import { type MiniGame } from "@/lib/minigames";
 import { calculateMoodXP } from "@/lib/xp";
 import { LoadingButton, LoadingSpinner } from "@/components/LoadingSpinner";
 import ProfileCard from "@/components/ProfileCard";
+import { LetterFlip } from "@/components/letter";
+import { getTodayDateString } from "@/lib/date";
+import { isLetterUnlocked } from "@/lib/letter/letterContent";
 import styles from "./dashboard.module.css";
 
 const ratingColor = (r: number) => {
@@ -185,6 +188,7 @@ export default function Dashboard() {
   const [heroMessage, setHeroMessage] =
     useState<HeroMessageData>(defaultHeroMessage);
   const [letterTeaserOpen, setLetterTeaserOpen] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
   const [questAnswers, setQuestAnswers] = useState<Record<string, string>>({});
   const [rewardNotes, setRewardNotes] = useState<Record<string, string>>({});
   const [shopOpen, setShopOpen] = useState(false);
@@ -448,9 +452,14 @@ export default function Dashboard() {
     router.push("/login");
   }
 
+  const letterUnlocked = isLetterUnlocked(getTodayDateString());
+
   const handleLetterTeaser = useCallback(() => {
     setLetterTeaserOpen(true);
-  }, []);
+    if (letterUnlocked) {
+      setLetterOpen(true);
+    }
+  }, [letterUnlocked]);
 
   const completionByGameId = useMemo(
     () =>
@@ -548,6 +557,12 @@ export default function Dashboard() {
       <FloatingLetterTeaser
         isOpen={letterTeaserOpen}
         onClick={handleLetterTeaser}
+      />
+
+      <LetterFlip
+        isOpen={letterOpen}
+        onClose={() => setLetterOpen(false)}
+        autoPlayAudio={true}
       />
 
       <motion.section

@@ -73,12 +73,26 @@ export default function LetterPage({ page, isVisible }: LetterPageProps) {
         );
 
       case "image":
+        const imageStyleClass =
+          section.imageStyle === "portrait"
+            ? styles.imagePortrait
+            : section.imageStyle === "contain"
+              ? styles.imageContain
+              : styles.imageLandscape;
+
         return (
-          <div key={idx} className={styles.imageContainer}>
+          <div
+            key={idx}
+            className={`${styles.imageContainer} ${imageStyleClass}`}
+          >
             <img
               src={section.content}
               alt="Letter content"
-              className={styles.image}
+              className={`${styles.image} ${
+                section.imageStyle === "contain"
+                  ? styles.imageContainFit
+                  : styles.imageCoverFit
+              }`}
             />
           </div>
         );

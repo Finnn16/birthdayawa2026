@@ -15,6 +15,7 @@ export interface LetterSection {
   content: string;
   alignment?: "left" | "center" | "right";
   size?: "sm" | "md" | "lg" | "xl";
+  imageStyle?: "portrait" | "landscape" | "contain";
   images?: string[]; // For carousel type
 }
 
@@ -26,6 +27,12 @@ export interface LetterPage {
   subtitle?: string; // Edition subtitle (e.g., "LOVE EDITION")
   sections: LetterSection[];
   imageUrl?: string; // Main featured image
+}
+
+export const LETTER_RELEASE_DATE = "2026-05-25";
+
+export function isLetterUnlocked(dateString: string): boolean {
+  return dateString >= LETTER_RELEASE_DATE;
 }
 
 /**
@@ -55,7 +62,8 @@ export const letterPages: LetterPage[] = [
       },
       {
         type: "image",
-        content: "/images/letter-main.jpg",
+        content: "/images/img8.jpg",
+        imageStyle: "portrait",
       },
       {
         type: "body",
@@ -93,26 +101,28 @@ export const letterPages: LetterPage[] = [
       },
       {
         type: "carousel",
-        content: "Foto yang KATA AKU kamu cantiiik xixix",
+        content: "XIXIXIXIXI ISI FOTO AJA WEH YAA",
         images: [
           "/images/img1.jpg",
-          "/images/img1.jpg",
-          "/images/img1.jpg",
-          "/images/img1.jpg",
-          "/images/img1.jpg",
-          "/images/img1.jpg",
+          "/images/img2.jpg",
+          "/images/img3.jpg",
+          "/images/img4.jpg",
+          "/images/img5.jpg",
+          "/images/img6.jpg",
         ],
       },
       {
-        type: "image",
-        content: "/images/letter-memory.jpg",
+        type: "body",
+        content:
+          "Pertama minta maaf yaa kalo kado di tahun ini telat nya sangat telat huhuhuh, tapi aku harap surat ini bisa menghibur sedikit bangeeet secuil ajaaa hehehe. Maafin juga karena belum bisa ketemu pas ulang tahun kamu huhu bahkan pas long weekend ini juga kita tidak bisa bertemu ternyata karena kamu pulang ke bogor da aku ge kangeeeen bangeet mauu ketemu, mau bonceng kamu, mau makaaaaan makaan lagi bareng kamu, mauu jajan, mauuu jailin kamuu lagi mwehe. Tapi percayalah pasti akan digantikan yang lebiih lagi dari ini xixixi siapa tau pas ketemu nanti kita bisa foya-foyaa bareeng AWOKWOKWOK.",
+        alignment: "left",
       },
     ],
   },
   {
     pageNumber: 3,
     title: "THE LOVE TIMES",
-    date: "SUNDAY, FEBRUARY 14, 2030",
+    date: "MONDAY, MAY 25, 2026",
     location: "PAGE 3",
     subtitle: "FOREVER PROMISE",
     sections: [
@@ -134,6 +144,12 @@ export const letterPages: LetterPage[] = [
           '"I choose you. Today, tomorrow, and every day after." - Forever Yours',
         alignment: "center",
         size: "md",
+      },
+      {
+        type: "body",
+        content:
+          "Harapan aku di ulang tahun kamu kali ini semoga kamu sehat selalu, bahagia selalu, lancar skripsi-nyaa, koas nya dimudahkan nani sampai kamu bisa jadi dokter yang hebat juga. Terima kasih sebanyak-banyaknya untuk semua kebaikan yang sudah kamu berikan selama ini, untuk semua kesabaran kamu, untuk semua perhatian kamu, dan untuk semua kepercayaan kamu semoga semua kebaikan itu dibalas dengan kebaikan yang berlipat ganda yaa sayaangkuuu (semoga lewat aku kebaikannya xixixi).",
+        alignment: "left",
       },
       {
         type: "body",

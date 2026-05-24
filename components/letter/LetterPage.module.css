@@ -192,10 +192,33 @@
   justify-content: center;
 }
 
+.imageLandscape {
+  aspect-ratio: 4 / 3;
+}
+
+.imagePortrait {
+  aspect-ratio: 4 / 5;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.imageContain {
+  background: #fdf8f2;
+}
+
 .image {
   width: 100%;
   height: 100%;
+}
+
+.imageCoverFit {
   object-fit: cover;
+}
+
+.imageContainFit {
+  object-fit: contain;
+  padding: 10px;
 }
 
 /* PAGE NUMBER */
@@ -303,6 +326,15 @@
   .imageContainer {
     margin: 16px 0;
     aspect-ratio: 3 / 4;
+  }
+
+  .imagePortrait {
+    aspect-ratio: 3 / 4;
+    max-width: 100%;
+  }
+
+  .imageContainFit {
+    padding: 8px;
   }
 
   .content {
