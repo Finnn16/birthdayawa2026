@@ -548,10 +548,7 @@ export default function Dashboard() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <DashboardHero
-          message={heroMessage}
-          target={countdownTarget}
-        />
+        <DashboardHero message={heroMessage} target={countdownTarget} />
       </motion.div>
 
       <FloatingLetterTeaser
