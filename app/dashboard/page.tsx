@@ -1253,9 +1253,9 @@ function DailyQuestSection({
                   <div style={{ display: "grid", gap: 10 }}>
                     {options.length > 0 ? (
                       <div style={s.optionGrid}>
-                        {options.map((option) => (
+                        {options.map((option, index) => (
                           <button
-                            key={option}
+                            key={`${assignment.id}-option-${index}-${option}`}
                             type="button"
                             style={{
                               ...s.optionBtn,
@@ -2234,9 +2234,9 @@ function MiniGamesSection({
                     )}
                     {options.length > 0 ? (
                       <div style={s.optionGrid}>
-                        {options.map((option) => (
+                        {options.map((option, index) => (
                           <button
-                            key={option}
+                            key={`${game.id}-option-${index}-${option}`}
                             type="button"
                             style={{
                               ...s.optionBtn,
