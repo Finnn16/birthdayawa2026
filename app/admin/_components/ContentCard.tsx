@@ -44,7 +44,7 @@ export function ContentCard({
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-3">
-        <div className="flex-1 pl-10">
+        <div className="flex-1">
           <h3 className="font-semibold text-gray-900 text-lg">{title}</h3>
           {type && <p className="text-sm text-gray-500">{type}</p>}
         </div>
@@ -83,7 +83,7 @@ export function ContentCard({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-end">
+      <div className="flex gap-2 justify-end">
         {onSchedule && (
           <button
             onClick={onSchedule}

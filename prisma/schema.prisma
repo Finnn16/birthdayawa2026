@@ -32,10 +32,6 @@ model User {
   gardenItems                GardenItem[]
   coupleEventsCreated        CoupleEvent[]         @relation("CoupleEventCreator")
   heroMessagesCreated        HeroMessage[]          @relation("HeroMessageCreator")
-  notificationCampaignsCreated NotificationCampaign[] @relation("NotificationCampaignCreator")
-  notificationDeliveryLogs    NotificationDeliveryLog[]
-  spotifyAccount             SpotifyAccount?
-  spotifyPresence            SpotifyPresence?
 
   @@index([phoneNumber])
   @@map("users")
@@ -59,16 +55,6 @@ model Mood {
   note      String?
   xpEarned  Int       @default(10) @map("xp_earned")
   streakDay Int       @default(1) @map("streak_day")
-  spotifyTrackId String? @map("spotify_track_id")
-  songTitle String? @map("song_title")
-  artistName String? @map("artist_name")
-  albumName String? @map("album_name")
-  albumImage String? @map("album_image")
-  weatherTemperature Decimal? @map("weather_temperature") @db.Decimal(5, 2)
-  weatherCode Int? @map("weather_code")
-  weatherDescription String? @map("weather_description")
-  weatherIsDay Boolean? @map("weather_is_day")
-  weatherRainProbability Int? @map("weather_rain_probability")
   createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -366,100 +352,4 @@ model HeroMessage {
   @@index([isActive, activeDate(sort: Desc), createdAt(sort: Desc)])
   @@index([publishStatus, publishAt])
   @@map("hero_messages")
-}
-
-model NotificationCampaign {
-  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name              String
-  notificationType  String                    @map("notification_type")
-  triggerType       String                    @map("trigger_type")
-  sendTime          String                    @map("send_time")
-  startDate         DateTime?                 @map("start_date") @db.Date
-  endDate           DateTime?                 @map("end_date") @db.Date
-  timezone          String                    @default("Asia/Jakarta")
-  publishStatus     String                    @default("published") @map("publish_status")
-  publishAt         DateTime?                 @map("publish_at") @db.Timestamptz(6)
-  isActive          Boolean                   @default(true) @map("is_active")
-  metadataJson      Json?                     @map("metadata_json")
-  lastSentAt        DateTime?                 @map("last_sent_at") @db.Timestamptz(6)
-  createdBy         String?                   @map("created_by") @db.Uuid
-  createdAt         DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime?                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  creator           User?                     @relation("NotificationCampaignCreator", fields: [createdBy], references: [id], onDelete: SetNull)
-  messages          NotificationMessage[]
-  deliveryLogs      NotificationDeliveryLog[]
-
-  @@index([isActive, triggerType, sendTime])
-  @@index([publishStatus, publishAt])
-  @@map("notification_campaigns")
-}
-
-model NotificationMessage {
-  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  campaignId String               @map("campaign_id") @db.Uuid
-  title      String
-  body       String
-  weight     Int                  @default(1)
-  isActive   Boolean              @default(true) @map("is_active")
-  createdAt  DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
-  campaign   NotificationCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  @@index([campaignId, isActive])
-  @@map("notification_messages")
-}
-
-model NotificationDeliveryLog {
-  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  campaignId        String?               @map("campaign_id") @db.Uuid
-  userId            String?               @map("user_id") @db.Uuid
-  notificationTitle String                @map("notification_title")
-  notificationBody  String                @map("notification_body")
-  status            String                @default("pending")
-  deliveryChannel   String                @default("whatsapp") @map("delivery_channel")
-  providerMessageId String?               @map("provider_message_id")
-  errorMessage      String?               @map("error_message")
-  sentAt            DateTime?             @map("sent_at") @db.Timestamptz(6)
-  deliveredAt       DateTime?             @map("delivered_at") @db.Timestamptz(6)
-  createdAt         DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
-  campaign          NotificationCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  user              User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([campaignId, createdAt(sort: Desc)])
-  @@index([userId, createdAt(sort: Desc)])
-  @@index([status, createdAt(sort: Desc)])
-  @@map("notification_delivery_logs")
-}
-
-model SpotifyAccount {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String    @unique @map("user_id") @db.Uuid
-  spotifyUserId String?   @map("spotify_user_id")
-  displayName   String?   @map("display_name")
-  accessToken   String    @map("access_token")
-  refreshToken  String    @map("refresh_token")
-  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(6)
-  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("spotify_accounts")
-}
-
-model SpotifyPresence {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId       String    @unique @map("user_id") @db.Uuid
-  trackId      String?   @map("track_id")
-  trackName    String?   @map("track_name")
-  artistName   String?   @map("artist_name")
-  albumName    String?   @map("album_name")
-  albumImage   String?   @map("album_image")
-  spotifyUrl   String?   @map("spotify_url")
-  isPlaying    Boolean   @default(false) @map("is_playing")
-  lastSyncedAt DateTime? @map("last_synced_at") @db.Timestamptz(6)
-  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([isPlaying, lastSyncedAt])
-  @@map("spotify_presence")
 }

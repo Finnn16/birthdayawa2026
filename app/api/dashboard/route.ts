@@ -41,7 +41,7 @@ export async function GET() {
         .maybeSingle(),
       db
         .from("moods")
-        .select("date, rating, streak_day, xp_earned, song_title, artist_name, weather_description, weather_temperature")
+        .select("date, rating, streak_day, xp_earned")
         .eq("user_id", user.id)
         .order("date", { ascending: false })
         .limit(7),
@@ -93,7 +93,7 @@ export async function GET() {
         .limit(40),
       db
         .from("moods")
-        .select("id, date, rating, song_title, artist_name, weather_description, weather_temperature")
+        .select("id, date, rating")
         .eq("user_id", user.id)
         .order("date", { ascending: false })
         .limit(30),

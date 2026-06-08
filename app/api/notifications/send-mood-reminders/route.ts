@@ -22,12 +22,6 @@ function getTwilioClient() {
 
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER || "";
 
-function getWhatsAppFromAddress() {
-  const raw = process.env.TWILIO_WHATSAPP_FROM || TWILIO_PHONE_NUMBER;
-  if (!raw) return "";
-  return raw.startsWith("whatsapp:") ? raw : `whatsapp:${raw}`;
-}
-
 interface UserWithEmail {
   id: string;
   username: string;
@@ -46,14 +40,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const twilioClient = getTwilioClient();
-    const fromAddress = getWhatsAppFromAddress();
 
-    if (!twilioClient || !fromAddress) {
+    if (!twilioClient || !TWILIO_PHONE_NUMBER) {
       return NextResponse.json(
         {
           error: "Twilio configuration is missing",
           details:
-            "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_FROM or TWILIO_PHONE_NUMBER.",
+            "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER.",
         },
         { status: 500 },
       );
@@ -156,7 +149,7 @@ export async function POST(req: NextRequest) {
 
         // Send WhatsApp message via Twilio
         const message = await twilioClient.messages.create({
-          from: fromAddress,
+          from: `whatsapp:${TWILIO_PHONE_NUMBER}`,
           to: `whatsapp:${phoneNumber}`,
           body: `Halo ${user.username}! 👋\n\nUdah isi mood track hari ini? Gimana perasaan lo? Jangan lupa log mood lo di app ya. Ini penting untuk track progress lo!\n\nLet's go! 💪`,
         });
