@@ -22,12 +22,24 @@ const ratingColor = (r: number) => {
 };
 
 type DashboardData = {
-  todayMood: { rating: number; note: string | null; streak_day: number } | null;
+  todayMood: {
+    rating: number;
+    note: string | null;
+    streak_day: number;
+    song_title?: string | null;
+    artist_name?: string | null;
+    weather_description?: string | null;
+    weather_temperature?: number | string | null;
+  } | null;
   history: {
     date: string;
     rating: number;
     streak_day: number;
     xp_earned: number;
+    song_title?: string | null;
+    artist_name?: string | null;
+    weather_description?: string | null;
+    weather_temperature?: number | string | null;
   }[];
   totalXP: number;
   currentStreak: number;
@@ -68,6 +80,29 @@ type CountdownTarget = {
   title: string;
   eventTitle: string;
   date: string;
+};
+
+type SpotifyTrackSnapshot = {
+  track_id: string | null;
+  track_name: string | null;
+  artist_name: string | null;
+  album_name: string | null;
+  album_image: string | null;
+  spotify_url: string | null;
+  played_at?: string;
+};
+
+type SpotifyPresenceData = SpotifyTrackSnapshot & {
+  is_playing?: boolean;
+  last_synced_at?: string;
+};
+
+type WeatherSnapshot = {
+  temperature: number | null;
+  weather_code: number | null;
+  weather_description: string | null;
+  is_day: boolean | null;
+  rain_probability: number | null;
 };
 
 async function readJsonResponse(res: Response) {
@@ -210,6 +245,12 @@ export default function Dashboard() {
   } | null>(null);
   const [error, setError] = useState("");
   const [username, setUsername] = useState("");
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [spotifyPresence, setSpotifyPresence] = useState<SpotifyPresenceData | null>(null);
+  const [recentTracks, setRecentTracks] = useState<SpotifyTrackSnapshot[]>([]);
+  const [weatherSnapshot, setWeatherSnapshot] = useState<WeatherSnapshot | null>(null);
+  const [soundtrackOpen, setSoundtrackOpen] = useState(false);
+  const [soundtrackLoading, setSoundtrackLoading] = useState(false);
 
   const fetchMiniGames = useCallback(async () => {
     const res = await fetch("/api/minigames");
@@ -250,6 +291,24 @@ export default function Dashboard() {
     setMiniGameMessage(json.minigameMessage ?? "");
     setLoading(false);
   }, [router]);
+
+  const fetchSpotifyPresence = useCallback(async () => {
+    const res = await fetch("/api/spotify/current-playing");
+    if (res.status === 401) return;
+    const json = await readJsonResponse(res);
+    setSpotifyConnected(Boolean(json.connected));
+    setSpotifyPresence(json.presence ?? null);
+  }, []);
+
+  const handleSpotifyConnect = async () => {
+    const res = await fetch("/api/spotify/connect", { method: "POST" });
+    const json = await readJsonResponse(res);
+    if (!res.ok || !json.authUrl) {
+      setError(json.error ?? "Spotify belum bisa dihubungkan.");
+      return;
+    }
+    window.location.href = json.authUrl;
+  };
 
   const fetchEngagement = useCallback(async () => {
     const [
@@ -302,6 +361,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
+    fetchSpotifyPresence();
     createClient()
       .auth.getUser()
       .then(({ data: d }) => {
@@ -309,7 +369,12 @@ export default function Dashboard() {
           d.user?.user_metadata?.username || d.user?.email?.split("@")[0] || "",
         );
       });
-  }, [fetchData]);
+  }, [fetchData, fetchSpotifyPresence]);
+
+  useEffect(() => {
+    const timer = window.setInterval(fetchSpotifyPresence, 5 * 60_000);
+    return () => window.clearInterval(timer);
+  }, [fetchSpotifyPresence]);
 
   useEffect(() => {
     if (!letterTeaserOpen) return;
@@ -329,10 +394,48 @@ export default function Dashboard() {
       return;
     }
 
+    setSoundtrackLoading(true);
+    try {
+      const [weatherResult, recentResult] = await Promise.allSettled([
+        fetch("/api/weather/current"),
+        fetch("/api/spotify/recently-played"),
+      ]);
+
+      if (weatherResult.status === "fulfilled") {
+        const weatherJson = await readJsonResponse(weatherResult.value);
+        setWeatherSnapshot(weatherJson.weather ?? null);
+      }
+
+      if (recentResult.status === "fulfilled") {
+        const recentJson = await readJsonResponse(recentResult.value);
+        setSpotifyConnected(Boolean(recentJson.connected));
+        setRecentTracks(recentJson.tracks ?? []);
+      }
+
+      setSoundtrackOpen(true);
+    } catch {
+      setSoundtrackOpen(true);
+    } finally {
+      setSoundtrackLoading(false);
+      setSubmitting(false);
+    }
+  }
+
+  async function submitMoodWithSoundtrack(soundtrack: SpotifyTrackSnapshot | null) {
+    setError("");
+    setSubmitting(true);
+    setSoundtrackOpen(false);
+
+    const trimmedNote = note.trim();
     const res = await fetch("/api/moods", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, note: trimmedNote }),
+      body: JSON.stringify({
+        rating,
+        note: trimmedNote,
+        soundtrack,
+        weather: weatherSnapshot,
+      }),
     });
     const json = await res.json();
 
@@ -678,6 +781,17 @@ export default function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.45 }}
+          >
+            <SpotifyPresencePanel
+              connected={spotifyConnected}
+              presence={spotifyPresence}
+              onConnect={handleSpotifyConnect}
+            />
+          </motion.div>
           {data?.level && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -755,7 +869,145 @@ export default function Dashboard() {
           />
         </motion.div>
       )}
+
+      {soundtrackOpen && (
+        <SoundtrackModal
+          loading={soundtrackLoading}
+          tracks={recentTracks}
+          connected={spotifyConnected}
+          weather={weatherSnapshot}
+          onConnect={handleSpotifyConnect}
+          onSkip={() => submitMoodWithSoundtrack(null)}
+          onSelect={submitMoodWithSoundtrack}
+          onClose={() => setSoundtrackOpen(false)}
+        />
+      )}
     </motion.main>
+  );
+}
+
+function SpotifyPresencePanel({
+  connected,
+  presence,
+  onConnect,
+}: {
+  connected: boolean;
+  presence: SpotifyPresenceData | null;
+  onConnect: () => void;
+}) {
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeader}>
+        <div>
+          <p className={styles.eyebrow}>Spotify</p>
+          <h2>Current playing</h2>
+        </div>
+        {presence?.is_playing && <span className={styles.rewardBadge}>Live</span>}
+      </div>
+      {!connected ? (
+        <div style={{ display: "grid", gap: 12 }}>
+          <p style={s.emptyText}>Hubungkan Spotify untuk menyimpan soundtrack mood dan melihat lagu yang sedang diputar.</p>
+          <button type="button" className={styles.primaryButton} onClick={onConnect}>
+            Connect Spotify
+          </button>
+        </div>
+      ) : presence?.track_name ? (
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {presence.album_image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={presence.album_image} alt="" style={{ width: 58, height: 58, borderRadius: 8, objectFit: "cover" }} />
+          )}
+          <div style={{ minWidth: 0 }}>
+            <strong style={{ display: "block", color: "#26211d" }}>{presence.track_name}</strong>
+            <span style={{ display: "block", color: "#6f6259", fontSize: 13 }}>{presence.artist_name}</span>
+            <span style={{ display: "block", color: "#9a8b80", fontSize: 12 }}>{presence.is_playing ? "Listening now" : "Last synced"}</span>
+          </div>
+        </div>
+      ) : (
+        <p style={s.emptyText}>Spotify connected, tapi tidak ada lagu yang sedang diputar.</p>
+      )}
+    </section>
+  );
+}
+
+function SoundtrackModal({
+  loading,
+  tracks,
+  connected,
+  weather,
+  onConnect,
+  onSkip,
+  onSelect,
+  onClose,
+}: {
+  loading: boolean;
+  tracks: SpotifyTrackSnapshot[];
+  connected: boolean;
+  weather: WeatherSnapshot | null;
+  onConnect: () => void;
+  onSkip: () => void;
+  onSelect: (track: SpotifyTrackSnapshot) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div style={s.modalBackdrop} onClick={onClose}>
+      <motion.div
+        style={s.soundtrackModal}
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+          <div>
+            <p className={styles.eyebrow}>Soundtrack hari ini</p>
+            <h2 style={{ margin: "4px 0 0", color: "#26211d" }}>Ada lagu yang menggambarkan harimu?</h2>
+            {weather && (
+              <p style={{ margin: "8px 0 0", color: "#6f6259", fontSize: 14 }}>
+                Cuaca tersimpan: {weather.weather_description ?? "Unknown"}{weather.temperature !== null ? `, ${weather.temperature} C` : ""}
+              </p>
+            )}
+          </div>
+          <button type="button" onClick={onClose} style={s.ghostButton}>Close</button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: "28px 0" }}>
+            <LoadingSpinner label="Menyiapkan soundtrack..." />
+          </div>
+        ) : !connected ? (
+          <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
+            <p style={s.emptyText}>Spotify belum terhubung. Mood tetap bisa disimpan tanpa lagu.</p>
+            <button type="button" className={styles.primaryButton} onClick={onConnect}>Connect Spotify</button>
+          </div>
+        ) : tracks.length > 0 ? (
+          <div style={s.trackList}>
+            {tracks.map((track, index) => (
+              <button
+                key={`${track.track_id ?? "track"}-${index}`}
+                type="button"
+                style={s.trackButton}
+                onClick={() => onSelect(track)}
+              >
+                {track.album_image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={track.album_image} alt="" style={{ width: 44, height: 44, borderRadius: 7, objectFit: "cover" }} />
+                )}
+                <span style={{ minWidth: 0 }}>
+                  <strong style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{track.track_name}</strong>
+                  <span style={{ display: "block", color: "#6f6259", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{track.artist_name}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p style={{ ...s.emptyText, marginTop: 18 }}>Belum ada recently played dari Spotify.</p>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 }}>
+          <button type="button" style={s.ghostButton} onClick={onSkip}>Skip soundtrack</button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -2046,7 +2298,7 @@ function gardenEmoji(itemType: string) {
 function AlreadyDone({
   mood,
 }: {
-  mood: { rating: number; note: string | null; streak_day: number };
+  mood: NonNullable<DashboardData["todayMood"]>;
 }) {
   return (
     <motion.div
@@ -2092,6 +2344,25 @@ function AlreadyDone({
         >
           &quot;{mood.note}&quot;
         </motion.p>
+      )}
+      {(mood.song_title || mood.weather_description) && (
+        <motion.div
+          style={{ display: "grid", gap: 6, marginTop: 14, color: "var(--text-muted)", fontSize: 13 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.33 }}
+        >
+          {mood.song_title && (
+            <span>
+              Soundtrack: <strong>{mood.song_title}</strong>{mood.artist_name ? ` - ${mood.artist_name}` : ""}
+            </span>
+          )}
+          {mood.weather_description && (
+            <span>
+              Weather: <strong>{mood.weather_description}</strong>{mood.weather_temperature ? `, ${mood.weather_temperature} C` : ""}
+            </span>
+          )}
+        </motion.div>
       )}
       <motion.p
         style={{ marginTop: 16, fontSize: 13, color: "var(--text-muted)" }}
@@ -2898,4 +3169,56 @@ const s: Record<string, CSSProperties> = {
     cursor: "pointer",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
   },
+  modalBackdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 100,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 18,
+    background: "rgba(23, 18, 16, 0.45)",
+    backdropFilter: "blur(8px)",
+  } as React.CSSProperties,
+  soundtrackModal: {
+    width: "min(720px, 100%)",
+    maxHeight: "86vh",
+    overflow: "hidden",
+    borderRadius: 20,
+    border: "1px solid rgba(139, 124, 111, 0.18)",
+    background: "#fffdfb",
+    padding: 22,
+    boxShadow: "0 24px 70px rgba(0,0,0,0.24)",
+  } as React.CSSProperties,
+  trackList: {
+    display: "grid",
+    gap: 10,
+    maxHeight: "46vh",
+    overflowY: "auto",
+    marginTop: 18,
+    paddingRight: 4,
+  } as React.CSSProperties,
+  trackButton: {
+    display: "grid",
+    gridTemplateColumns: "44px minmax(0, 1fr)",
+    gap: 12,
+    alignItems: "center",
+    width: "100%",
+    border: "1px solid rgba(139, 124, 111, 0.16)",
+    borderRadius: 12,
+    background: "rgba(255, 253, 251, 0.92)",
+    padding: 10,
+    textAlign: "left",
+    color: "#26211d",
+    cursor: "pointer",
+  } as React.CSSProperties,
+  ghostButton: {
+    border: "1px solid rgba(139, 124, 111, 0.2)",
+    borderRadius: 10,
+    background: "rgba(255, 253, 251, 0.9)",
+    color: "#6f6259",
+    padding: "9px 12px",
+    fontWeight: 700,
+    cursor: "pointer",
+  } as React.CSSProperties,
 };

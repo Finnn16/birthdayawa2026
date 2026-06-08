@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "Dash", href: "/admin/dashboard" },
   { id: "studio", label: "Content Studio", icon: "Edit", href: "/admin/studio" },
   { id: "calendar", label: "Calendar", icon: "Cal", href: "/admin/calendar" },
+  { id: "notifications", label: "Notification Center", icon: "Bell", href: "/admin/notifications" },
   { id: "analytics", label: "Analytics", icon: "Chart", href: "/admin/analytics" },
   { id: "vault", label: "Memory Vault", icon: "Vault", href: "/admin/vault" },
 ];

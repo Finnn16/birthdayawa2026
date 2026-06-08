@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { rating, note } = await req.json();
+  const { rating, note, soundtrack, weather } = await req.json();
   const trimmedNote = typeof note === "string" ? note.trim() : "";
 
   // Validate rating
@@ -75,6 +75,16 @@ export async function POST(req: NextRequest) {
       note: trimmedNote,
       xp_earned: xpEarned,
       streak_day: streakDay,
+      spotify_track_id: typeof soundtrack?.track_id === "string" ? soundtrack.track_id : null,
+      song_title: typeof soundtrack?.track_name === "string" ? soundtrack.track_name : null,
+      artist_name: typeof soundtrack?.artist_name === "string" ? soundtrack.artist_name : null,
+      album_name: typeof soundtrack?.album_name === "string" ? soundtrack.album_name : null,
+      album_image: typeof soundtrack?.album_image === "string" ? soundtrack.album_image : null,
+      weather_temperature: typeof weather?.temperature === "number" ? weather.temperature : null,
+      weather_code: typeof weather?.weather_code === "number" ? weather.weather_code : null,
+      weather_description: typeof weather?.weather_description === "string" ? weather.weather_description : null,
+      weather_is_day: typeof weather?.is_day === "boolean" ? weather.is_day : null,
+      weather_rain_probability: typeof weather?.rain_probability === "number" ? weather.rain_probability : null,
     })
     .select()
     .single();
