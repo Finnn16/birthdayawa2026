@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
 import { MAX_ACTIVE_MINI_GAMES } from "@/lib/app-config";
 import { getTodayDateString } from "@/lib/date";
 import { normalizeOptions, validateMiniGamePayload, wouldExceedActiveLimit } from "@/lib/minigames";
@@ -64,13 +65,19 @@ export async function POST(req: NextRequest) {
 
     const adminDb = createServiceRoleClient();
     const payload = await req.json();
+    const publishPatch = getPublishPatch(
+      payload.publish_status ?? (payload.is_active === false ? "draft" : "published"),
+      payload.publish_at ?? payload.active_date,
+      "minigames",
+    );
+    const willBeActive = publishPatch.is_active === true;
     const validationError = validateMiniGamePayload(payload);
 
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    if (payload.is_active) {
+    if (willBeActive) {
       const { count, error: countError } = await adminDb
         .from("mini_games")
         .select("id", { count: "exact", head: true })
@@ -120,6 +127,7 @@ export async function POST(req: NextRequest) {
           ? payload.correct_answer.trim()
           : null,
       metadata_json: payload.metadata_json ?? null,
+      ...publishPatch,
       created_by: creatorProfile?.id ?? null,
     };
 

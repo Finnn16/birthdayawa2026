@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
+import { getQuestScheduledDate, scheduleQuestAssignment } from "@/lib/admin-quest-scheduling";
 import { normalizeJsonList } from "@/lib/engagement";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
@@ -20,12 +22,37 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (payload.options_json !== undefined) update.options_json = normalizeJsonList(payload.options_json);
     if (typeof payload.xp_reward === "number") update.xp_reward = payload.xp_reward;
     if (typeof payload.hearts_reward === "number") update.hearts_reward = payload.hearts_reward;
-    if (typeof payload.is_active === "boolean") update.is_active = payload.is_active;
     if (payload.metadata_json !== undefined) update.metadata_json = payload.metadata_json;
+    const nextStatus =
+      payload.publish_status ??
+      (payload.is_active === true ? "published" : payload.is_active === false ? "draft" : undefined);
+    const scheduledDate =
+      (nextStatus ?? ("publish_at" in payload ? "scheduled" : undefined)) === "scheduled"
+        ? getQuestScheduledDate(payload.publish_at)
+        : null;
+    if ((nextStatus ?? ("publish_at" in payload ? "scheduled" : undefined)) === "scheduled" && !scheduledDate) {
+      return NextResponse.json({ error: "Publish date wajib valid untuk scheduled quest." }, { status: 400 });
+    }
+    if (nextStatus || "publish_at" in payload) {
+      Object.assign(update, getPublishPatch(nextStatus ?? "scheduled", payload.publish_at, "quests"));
+    }
 
     const { data, error: updateError } = await db.from("daily_quest_bank").update(update).eq("id", id).select().single();
     if (updateError) return NextResponse.json({ error: "Gagal update quest.", details: updateError.message }, { status: 500 });
-    return NextResponse.json({ quest: data });
+
+    let assignment = null;
+    if (scheduledDate) {
+      const assignmentResult = await scheduleQuestAssignment(db, id, scheduledDate, user.id);
+      if (assignmentResult.error) {
+        return NextResponse.json(
+          { error: "Quest updated, tapi gagal membuat assignment terjadwal.", details: assignmentResult.error.message },
+          { status: 500 },
+        );
+      }
+      assignment = assignmentResult.data;
+    }
+
+    return NextResponse.json({ quest: data, assignment });
   } catch (error) {
     return NextResponse.json({ error: "Gagal update quest.", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }

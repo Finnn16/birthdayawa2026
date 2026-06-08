@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
+import { getQuestScheduledDate, scheduleQuestAssignment } from "@/lib/admin-quest-scheduling";
 import { getTodayDateString } from "@/lib/date";
 import { normalizeJsonList, QUEST_DIFFICULTIES, QUEST_TYPES } from "@/lib/engagement";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
@@ -48,6 +50,11 @@ export async function POST(req: NextRequest) {
     }
     if (!QUEST_TYPES.includes(payload.type)) payload.type = "reflection";
     if (!QUEST_DIFFICULTIES.includes(payload.difficulty)) payload.difficulty = "easy";
+    const scheduledDate =
+      payload.publish_status === "scheduled" ? getQuestScheduledDate(payload.publish_at) : null;
+    if (payload.publish_status === "scheduled" && !scheduledDate) {
+      return NextResponse.json({ error: "Publish date wajib valid untuk scheduled quest." }, { status: 400 });
+    }
 
     const { data: creatorProfile } = await db.from("users").select("id").eq("id", user.id).maybeSingle();
     const { data, error: insertError } = await db
@@ -62,15 +69,28 @@ export async function POST(req: NextRequest) {
         prompt: typeof payload.prompt === "string" ? payload.prompt.trim() : null,
         options_json: normalizeJsonList(payload.options_json),
         correct_answer: typeof payload.correct_answer === "string" && payload.correct_answer.trim() ? payload.correct_answer.trim() : null,
-        is_active: payload.is_active !== false,
         metadata_json: payload.metadata_json ?? null,
+        ...getPublishPatch(payload.publish_status ?? (payload.is_active === false ? "draft" : "published"), payload.publish_at, "quests"),
         created_by: creatorProfile?.id ?? null,
       })
       .select()
       .single();
 
     if (insertError) return NextResponse.json({ error: "Gagal membuat quest.", details: insertError.message }, { status: 500 });
-    return NextResponse.json({ quest: data }, { status: 201 });
+
+    let assignment = null;
+    if (scheduledDate) {
+      const assignmentResult = await scheduleQuestAssignment(db, data.id, scheduledDate, user.id);
+      if (assignmentResult.error) {
+        return NextResponse.json(
+          { error: "Quest dibuat, tapi gagal membuat assignment terjadwal.", details: assignmentResult.error.message },
+          { status: 500 },
+        );
+      }
+      assignment = assignmentResult.data;
+    }
+
+    return NextResponse.json({ quest: data, assignment }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Gagal membuat quest.", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }

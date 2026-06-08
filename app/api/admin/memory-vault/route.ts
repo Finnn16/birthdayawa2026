@@ -4,7 +4,7 @@ import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
 type MemoryEntry = {
   id: string;
-  type: "letter" | "event" | "milestone" | "mood" | "memory";
+  type: "event" | "milestone" | "mood" | "memory";
   title: string;
   description?: string;
   date: string;
@@ -45,13 +45,7 @@ export async function GET() {
     const db = createServiceRoleClient();
     const targetUserId = await getTargetUserId(db);
 
-    const [letters, events, moods, redemptions] = await Promise.all([
-      db
-        .from("letters")
-        .select("id, title, subtitle, trigger_date, is_active, letter_pages(id)")
-        .eq("is_active", true)
-        .order("trigger_date", { ascending: false })
-        .limit(50),
+    const [events, moods, redemptions] = await Promise.all([
       db
         .from("couple_events")
         .select("id, title, description, event_date, event_type, is_special")
@@ -77,34 +71,18 @@ export async function GET() {
         : Promise.resolve({ data: [] }),
     ]);
 
-    if (letters.error || events.error) {
+    if (events.error) {
       return NextResponse.json(
         {
           memories: [],
           error: "Gagal memuat memory vault.",
-          details: letters.error?.message ?? events.error?.message,
+          details: events.error.message,
         },
         { status: 503 },
       );
     }
 
     const memoryEntries: MemoryEntry[] = [
-      ...(letters.data?.map((letter: any) => {
-        const date = normalizeDateString(letter.trigger_date);
-        return {
-          id: `letter-${letter.id}`,
-          type: "letter" as const,
-          title: letter.title,
-          description: letter.subtitle ?? "Scheduled letter",
-          date: formatDate(date),
-          icon: "✉️",
-          color: "bg-pink-400",
-          sortDate: date,
-          relatedData: {
-            pages: letter.letter_pages?.length ?? 0,
-          },
-        };
-      }) ?? []),
       ...(events.data?.map((event: any) => {
         const date = normalizeDateString(event.event_date);
         return {
@@ -113,7 +91,7 @@ export async function GET() {
           title: event.title,
           description: event.description ?? undefined,
           date: formatDate(date),
-          icon: event.is_special ? "🎉" : "📅",
+          icon: event.is_special ? "Special" : "Event",
           color: event.is_special ? "bg-purple-500" : "bg-blue-400",
           sortDate: date,
           relatedData: {
@@ -134,7 +112,7 @@ export async function GET() {
               title: `Mood Rating ${mood.rating}/10`,
               description: mood.note ?? (mood.rating >= 9 ? "A bright mood day" : "A day that needed extra care"),
               date: formatDate(date),
-              icon: mood.rating >= 9 ? "🌟" : "💗",
+              icon: mood.rating >= 9 ? "Bright" : "Care",
               color: mood.rating >= 9 ? "bg-yellow-400" : "bg-rose-400",
               sortDate: date,
               relatedData: {
@@ -151,7 +129,7 @@ export async function GET() {
               title: `${mood.streak_day} Days Streak Achieved`,
               description: "Mood tracking streak milestone",
               date: formatDate(date),
-              icon: "🏆",
+              icon: "Milestone",
               color: "bg-emerald-500",
               sortDate: date,
               relatedData: {
@@ -172,7 +150,7 @@ export async function GET() {
           title: `Reward ${redemption.status}: ${redemption.rewards?.title ?? "Reward"}`,
           description: "Reward memory",
           date: formatDate(date),
-          icon: "🎁",
+          icon: "Reward",
           color: "bg-fuchsia-400",
           sortDate: date,
           relatedData: {

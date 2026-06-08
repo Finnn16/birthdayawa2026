@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
 
 type NavItem = {
   id: string;
@@ -12,10 +11,11 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: "📊", href: "/admin/dashboard" },
-  { id: "studio", label: "Content Studio", icon: "✏️", href: "/admin/studio" },
-  { id: "analytics", label: "Analytics", icon: "📈", href: "/admin/analytics" },
-  { id: "vault", label: "Memory Vault", icon: "💾", href: "/admin/vault" },
+  { id: "dashboard", label: "Dashboard", icon: "Dash", href: "/admin/dashboard" },
+  { id: "studio", label: "Content Studio", icon: "Edit", href: "/admin/studio" },
+  { id: "calendar", label: "Calendar", icon: "Cal", href: "/admin/calendar" },
+  { id: "analytics", label: "Analytics", icon: "Chart", href: "/admin/analytics" },
+  { id: "vault", label: "Memory Vault", icon: "Vault", href: "/admin/vault" },
 ];
 
 export function AdminNavigation() {
@@ -35,7 +35,9 @@ export function AdminNavigation() {
                 : "text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <span className="text-xl">{item.icon}</span>
+            <span className="w-10 shrink-0 rounded-md bg-gray-100 px-2 py-1 text-center text-xs font-bold">
+              {item.icon}
+            </span>
             <span>{item.label}</span>
           </Link>
         );

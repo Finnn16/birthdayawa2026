@@ -10,7 +10,6 @@ import { type MiniGame } from "@/lib/minigames";
 import { calculateMoodXP } from "@/lib/xp";
 import { LoadingButton, LoadingSpinner } from "@/components/LoadingSpinner";
 import ProfileCard from "@/components/ProfileCard";
-import { LetterFlip } from "@/components/letter";
 import { getTodayDateString } from "@/lib/date";
 import { isLetterUnlocked } from "@/lib/letter/letterContent";
 import styles from "./dashboard.module.css";
@@ -323,10 +322,17 @@ export default function Dashboard() {
     setError("");
     setSubmitting(true);
 
+    const trimmedNote = note.trim();
+    if (!trimmedNote) {
+      setError("Isi pesan mood dulu ya.");
+      setSubmitting(false);
+      return;
+    }
+
     const res = await fetch("/api/moods", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, note }),
+      body: JSON.stringify({ rating, note: trimmedNote }),
     });
     const json = await res.json();
 
@@ -457,7 +463,7 @@ export default function Dashboard() {
   const handleLetterTeaser = useCallback(() => {
     setLetterTeaserOpen(true);
     if (letterUnlocked) {
-      setLetterOpen(true);
+      window.open("/letter?autoPrint=1", "_blank", "noopener,noreferrer");
     }
   }, [letterUnlocked]);
 
@@ -554,12 +560,6 @@ export default function Dashboard() {
       <FloatingLetterTeaser
         isOpen={letterTeaserOpen}
         onClick={handleLetterTeaser}
-      />
-
-      <LetterFlip
-        isOpen={letterOpen}
-        onClose={() => setLetterOpen(false)}
-        autoPlayAudio={true}
       />
 
       <motion.section
@@ -979,7 +979,7 @@ function FloatingLetterTeaser({
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
           >
-            MWEHEHE sudah gak sabar yaa?
+            Suratnya sudah siap diunduh jadi PDF.
           </motion.div>
         )}
       </AnimatePresence>
@@ -988,7 +988,7 @@ function FloatingLetterTeaser({
         type="button"
         className={styles.letterTeaserButton}
         onClick={onClick}
-        aria-label="Letter teaser"
+        aria-label="Download letter to PDF"
         whileHover={{ y: -2, scale: 1.03 }}
         whileTap={{ scale: 0.96 }}
       >
@@ -1006,6 +1006,7 @@ function FloatingLetterTeaser({
           <path d="m4.8 16.2 5.3-4" />
           <path d="m19.2 16.2-5.3-4" />
         </svg>
+        <span>Download to PDF</span>
         <span className={styles.letterTeaserSeal} aria-hidden="true" />
       </motion.button>
     </div>

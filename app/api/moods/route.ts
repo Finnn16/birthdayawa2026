@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTodayDateString } from "@/lib/date";
 import { getGardenItemTypeForMood } from "@/lib/engagement";
-import { createServiceRoleClient, getAuthenticatedUser } from "@/lib/server-supabase";
+import {
+  createServiceRoleClient,
+  getAuthenticatedUser,
+} from "@/lib/server-supabase";
 import { getNextMoodStreakDay } from "@/lib/streak-protection";
 import { calculateMoodXP } from "@/lib/xp";
 import { getUserProgress } from "@/lib/progress";
@@ -13,11 +16,19 @@ export async function POST(req: NextRequest) {
   }
 
   const { rating, note } = await req.json();
+  const trimmedNote = typeof note === "string" ? note.trim() : "";
 
   // Validate rating
   if (!rating || typeof rating !== "number" || rating < 1 || rating > 10) {
     return NextResponse.json(
       { error: "Rating harus angka 1-10" },
+      { status: 400 },
+    );
+  }
+
+  if (!trimmedNote) {
+    return NextResponse.json(
+      { error: "Isi pesan mood dulu ya." },
       { status: 400 },
     );
   }
@@ -61,7 +72,7 @@ export async function POST(req: NextRequest) {
       user_id: user.id,
       date: today,
       rating,
-      note: note?.trim() || null,
+      note: trimmedNote,
       xp_earned: xpEarned,
       streak_day: streakDay,
     })
@@ -96,7 +107,7 @@ export async function POST(req: NextRequest) {
     mood_rating: rating,
     earned_date: today,
     metadata_json: {
-      note_added: Boolean(note?.trim()),
+      note_added: true,
     },
   });
 

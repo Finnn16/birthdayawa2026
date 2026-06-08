@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
 export async function GET() {
@@ -51,8 +52,8 @@ export async function POST(req: NextRequest) {
         body: payload.body.trim(),
         tone: typeof payload.tone === "string" && payload.tone ? payload.tone : "soft",
         active_date: typeof payload.active_date === "string" && payload.active_date ? payload.active_date : null,
-        is_active: payload.is_active !== false,
         metadata_json: payload.metadata_json ?? null,
+        ...getPublishPatch(payload.publish_status ?? (payload.is_active === false ? "draft" : "published"), payload.publish_at ?? payload.active_date, "messages"),
         created_by: creator?.id ?? null,
       })
       .select()

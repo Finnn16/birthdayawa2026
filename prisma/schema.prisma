@@ -32,7 +32,6 @@ model User {
   gardenItems                GardenItem[]
   coupleEventsCreated        CoupleEvent[]         @relation("CoupleEventCreator")
   heroMessagesCreated        HeroMessage[]          @relation("HeroMessageCreator")
-  lettersCreated             Letter[]              @relation("LetterCreator")
 
   @@index([phoneNumber])
   @@map("users")
@@ -103,6 +102,10 @@ model MiniGame {
   optionsJson Json?                @map("options_json")
   correctAnswer String?            @map("correct_answer")
   metadataJson Json?               @map("metadata_json")
+  publishStatus String             @default("draft") @map("publish_status")
+  publishAt   DateTime?            @map("publish_at") @db.Timestamptz(6)
+  publishedAt DateTime?            @map("published_at") @db.Timestamptz(6)
+  archivedAt  DateTime?            @map("archived_at") @db.Timestamptz(6)
   createdBy   String?              @map("created_by") @db.Uuid
   createdAt   DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime?            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -110,6 +113,7 @@ model MiniGame {
   completions MiniGameCompletion[]
 
   @@index([isActive, activeDate])
+  @@index([publishStatus, publishAt])
   @@map("mini_games")
 }
 
@@ -157,6 +161,10 @@ model Reward {
   requiresAdminApproval Boolean            @default(true) @map("requires_admin_approval")
   stockLimit            Int?               @map("stock_limit")
   metadataJson          Json?              @map("metadata_json")
+  publishStatus         String             @default("draft") @map("publish_status")
+  publishAt             DateTime?          @map("publish_at") @db.Timestamptz(6)
+  publishedAt           DateTime?          @map("published_at") @db.Timestamptz(6)
+  archivedAt            DateTime?          @map("archived_at") @db.Timestamptz(6)
   createdBy             String?            @map("created_by") @db.Uuid
   createdAt             DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -164,6 +172,7 @@ model Reward {
   redemptions           RewardRedemption[]
 
   @@index([isActive, category])
+  @@index([publishStatus, publishAt])
   @@map("rewards")
 }
 
@@ -200,6 +209,10 @@ model DailyQuestBank {
   correctAnswer  String?                @map("correct_answer")
   isActive       Boolean                @default(true) @map("is_active")
   metadataJson   Json?                  @map("metadata_json")
+  publishStatus  String                 @default("draft") @map("publish_status")
+  publishAt      DateTime?              @map("publish_at") @db.Timestamptz(6)
+  publishedAt    DateTime?              @map("published_at") @db.Timestamptz(6)
+  archivedAt     DateTime?              @map("archived_at") @db.Timestamptz(6)
   createdBy      String?                @map("created_by") @db.Uuid
   createdAt      DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime?              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -208,6 +221,7 @@ model DailyQuestBank {
   completions    DailyQuestCompletion[]
 
   @@index([isActive, type])
+  @@index([publishStatus, publishAt])
   @@map("daily_quest_bank")
 }
 
@@ -326,62 +340,16 @@ model HeroMessage {
   activeDate   DateTime? @map("active_date") @db.Date
   isActive     Boolean   @default(true) @map("is_active")
   metadataJson Json?     @map("metadata_json")
+  publishStatus String   @default("draft") @map("publish_status")
+  publishAt    DateTime? @map("publish_at") @db.Timestamptz(6)
+  publishedAt  DateTime? @map("published_at") @db.Timestamptz(6)
+  archivedAt   DateTime? @map("archived_at") @db.Timestamptz(6)
   createdBy    String?   @map("created_by") @db.Uuid
   createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   creator      User?     @relation("HeroMessageCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([isActive, activeDate(sort: Desc), createdAt(sort: Desc)])
+  @@index([publishStatus, publishAt])
   @@map("hero_messages")
-}
-
-model Letter {
-  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title         String
-  subtitle      String?
-  triggerDate   DateTime     @map("trigger_date") @db.Date
-  audioUrl      String?      @map("audio_url")
-  isActive      Boolean      @default(true) @map("is_active")
-  metadataJson  Json?        @map("metadata_json")
-  createdBy     String?      @map("created_by") @db.Uuid
-  createdAt     DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  creator       User?        @relation("LetterCreator", fields: [createdBy], references: [id], onDelete: SetNull)
-  pages         LetterPage[]
-
-  @@index([isActive, triggerDate(sort: Desc)])
-  @@map("letters")
-}
-
-model LetterPage {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  letterId        String            @map("letter_id") @db.Uuid
-  pageNumber      Int               @map("page_number")
-  headline        String
-  subtitle        String?
-  imageUrl        String?           @map("image_url")
-  imagePosition   String?           @default("left") @map("image_position")
-  createdAt       DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime?         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  letter          Letter            @relation(fields: [letterId], references: [id], onDelete: Cascade)
-  sections        LetterSection[]
-
-  @@unique([letterId, pageNumber])
-  @@index([letterId])
-  @@map("letter_pages")
-}
-
-model LetterSection {
-  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  pageId          String       @map("page_id") @db.Uuid
-  sectionNumber   Int          @map("section_number")
-  title           String?
-  body            String
-  createdAt       DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  page            LetterPage   @relation(fields: [pageId], references: [id], onDelete: Cascade)
-
-  @@unique([pageId, sectionNumber])
-  @@index([pageId])
-  @@map("letter_sections")
 }

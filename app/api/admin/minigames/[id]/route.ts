@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
 import { MAX_ACTIVE_MINI_GAMES } from "@/lib/app-config";
 import { normalizeOptions, validateMiniGamePayload, wouldExceedActiveLimit } from "@/lib/minigames";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
@@ -51,13 +52,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const mergedPayload = { ...existing, ...payload };
+    const nextStatus =
+      payload.publish_status ??
+      (payload.is_active === true ? "published" : payload.is_active === false ? "draft" : undefined);
+    const publishPatch =
+      nextStatus || "publish_at" in payload
+        ? getPublishPatch(nextStatus ?? "scheduled", payload.publish_at ?? payload.active_date, "minigames")
+        : null;
     const validationError = validateMiniGamePayload(mergedPayload);
 
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    if (payload.is_active) {
+    if (publishPatch?.is_active === true || (!publishPatch && payload.is_active === true)) {
       const { count, error: countError } = await adminDb
         .from("mini_games")
         .select("id", { count: "exact", head: true })
@@ -108,6 +116,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           ? mergedPayload.correct_answer.trim()
           : null,
       metadata_json: mergedPayload.metadata_json ?? null,
+      ...(publishPatch ?? {}),
       updated_at: new Date().toISOString(),
     };
 

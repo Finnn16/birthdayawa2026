@@ -15,7 +15,7 @@ type UserSummary = {
 type DatedItem = {
   title: string;
   date: string;
-  source: "event" | "letter" | "birthday";
+  source: "event" | "birthday";
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -68,7 +68,6 @@ export async function GET() {
       pendingRedemptions,
       pendingStreakRequests,
       coupleEvents,
-      letters,
       progress,
       heartsBalance,
     ] = await Promise.all([
@@ -104,13 +103,6 @@ export async function GET() {
         .gte("event_date", today)
         .order("event_date", { ascending: true })
         .limit(5),
-      db
-        .from("letters")
-        .select("title, trigger_date")
-        .eq("is_active", true)
-        .gte("trigger_date", today)
-        .order("trigger_date", { ascending: true })
-        .limit(5),
       targetUserId
         ? getUserProgress(db, targetUserId)
         : Promise.resolve({ currentStreak: 0, totalXP: 0 }),
@@ -143,11 +135,6 @@ export async function GET() {
         title: item.title,
         date: normalizeDateString(item.event_date),
         source: "event" as const,
-      })) ?? []),
-      ...(letters.data?.map((item: { title: string; trigger_date: string }) => ({
-        title: `Letter: ${item.title}`,
-        date: normalizeDateString(item.trigger_date),
-        source: "letter" as const,
       })) ?? []),
       ...(BIRTHDAY_DATE >= today
         ? [{ title: "Birthday Countdown", date: BIRTHDAY_DATE, source: "birthday" as const }]

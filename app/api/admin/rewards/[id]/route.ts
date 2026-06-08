@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
 type Params = { params: Promise<{ id: string }> };
@@ -17,10 +18,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (typeof payload.description === "string") update.description = payload.description.trim();
     if (typeof payload.cost_hearts === "number") update.cost_hearts = payload.cost_hearts;
     if (typeof payload.category === "string") update.category = payload.category;
-    if (typeof payload.is_active === "boolean") update.is_active = payload.is_active;
     if (typeof payload.stock_limit === "number" || payload.stock_limit === null) update.stock_limit = payload.stock_limit;
     if (payload.metadata_json !== undefined) update.metadata_json = payload.metadata_json;
     update.requires_admin_approval = true;
+    const nextStatus =
+      payload.publish_status ??
+      (payload.is_active === true ? "published" : payload.is_active === false ? "draft" : undefined);
+    if (nextStatus || "publish_at" in payload) {
+      Object.assign(update, getPublishPatch(nextStatus ?? "scheduled", payload.publish_at, "rewards"));
+    }
 
     const { data, error: updateError } = await db.from("rewards").update(update).eq("id", id).select().single();
     if (updateError) return NextResponse.json({ error: "Gagal update reward.", details: updateError.message }, { status: 500 });

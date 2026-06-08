@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
 export async function PATCH(
@@ -31,8 +32,13 @@ export async function PATCH(
     if ("active_date" in payload) {
       patch.active_date = typeof payload.active_date === "string" && payload.active_date ? payload.active_date : null;
     }
-    if (typeof payload.is_active === "boolean") patch.is_active = payload.is_active;
     if ("metadata_json" in payload) patch.metadata_json = payload.metadata_json ?? null;
+    const nextStatus =
+      payload.publish_status ??
+      (payload.is_active === true ? "published" : payload.is_active === false ? "draft" : undefined);
+    if (nextStatus || "publish_at" in payload) {
+      Object.assign(patch, getPublishPatch(nextStatus ?? "scheduled", payload.publish_at ?? payload.active_date, "messages"));
+    }
 
     const { data, error: updateError } = await db
       .from("hero_messages")

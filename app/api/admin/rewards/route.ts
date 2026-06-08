@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublishPatch } from "@/lib/admin-publishing";
 import { createServiceRoleClient, requireAdmin } from "@/lib/server-supabase";
 
 export async function GET() {
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
         requires_admin_approval: true,
         stock_limit: typeof payload.stock_limit === "number" ? payload.stock_limit : null,
         metadata_json: payload.metadata_json ?? null,
+        ...getPublishPatch(payload.publish_status ?? (payload.is_active === false ? "draft" : "published"), payload.publish_at, "rewards"),
         created_by: creatorProfile?.id ?? null,
       })
       .select()
