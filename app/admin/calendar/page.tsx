@@ -93,8 +93,8 @@ export default function ContentCalendarPage() {
     minigame: true,
     event: true,
   });
-  const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
-  const [quickEditDate, setQuickEditDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,15 +119,8 @@ export default function ContentCalendarPage() {
     fetchCalendar();
   }, [fetchCalendar]);
 
-  useEffect(() => {
-    setQuickEditDate(selectedItem?.date ?? "");
-  }, [selectedItem]);
-
   const visibleDays = useMemo(() => buildDays(activeDate, view), [activeDate, view]);
-  const filteredItems = useMemo(
-    () => items.filter((item) => enabledTypes[item.type]),
-    [items, enabledTypes],
-  );
+  const filteredItems = useMemo(() => items.filter((item) => enabledTypes[item.type]), [items, enabledTypes]);
   const itemsByDate = useMemo(() => {
     const grouped = new Map<string, CalendarItem[]>();
     for (const item of filteredItems) {
@@ -144,6 +137,11 @@ export default function ContentCalendarPage() {
       count: items.filter((item) => item.type === option.id).length,
     }));
   }, [items]);
+
+  const selectedDateItems = selectedDate ? itemsByDate.get(selectedDate) ?? [] : [];
+  const selectedDateLabel = selectedDate
+    ? parseDateKey(selectedDate).toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })
+    : "";
 
   const moveDate = (direction: -1 | 1) => {
     const next = new Date(activeDate);
@@ -167,7 +165,7 @@ export default function ContentCalendarPage() {
       if (!res.ok) throw new Error(json.error || "Failed to reschedule item");
       setNotice(`${item.title} moved to ${date}.`);
       setItems((current) => current.map((entry) => (entry.id === item.id && entry.type === item.type ? { ...entry, date } : entry)));
-      setSelectedItem((current) => current && current.id === item.id && current.type === item.type ? { ...current, date } : current);
+      setSelectedDate(date);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -178,9 +176,7 @@ export default function ContentCalendarPage() {
   const handleDrop = (date: string, raw: string) => {
     const [type, id] = raw.split(":") as [CalendarType, string];
     const item = items.find((entry) => entry.type === type && entry.id === id);
-    if (item && item.date !== date) {
-      rescheduleItem(item, date);
-    }
+    if (item && item.date !== date) rescheduleItem(item, date);
   };
 
   const toggleType = (type: CalendarType) => {
@@ -191,18 +187,18 @@ export default function ContentCalendarPage() {
     const isCurrentMonth = date.getMonth() === activeDate.getMonth();
     const isToday = toDateKey(date) === toDateKey(new Date());
     return [
-      "min-h-[132px] border border-gray-200 bg-white p-3 transition-colors",
-      isCurrentMonth || view !== "month" ? "text-gray-900" : "text-gray-400 bg-gray-50",
+      "min-h-[218px] cursor-pointer border border-gray-200 bg-white p-4 text-left transition-colors hover:bg-purple-50/50 focus:outline-none focus:ring-2 focus:ring-purple-400",
+      isCurrentMonth || view !== "month" ? "text-gray-900" : "bg-gray-50 text-gray-400",
       isToday ? "ring-2 ring-purple-400 ring-inset" : "",
     ].join(" ");
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">Content Calendar</h1>
-          <p className="mt-2 text-gray-600">Plan, preview, and reschedule all admin content from one calendar.</p>
+          <p className="mt-2 text-gray-600">Plan and reschedule all admin content from one calendar.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => moveDate(-1)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Prev</button>
@@ -225,120 +221,171 @@ export default function ContentCalendarPage() {
       {notice && <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-700">{notice}</div>}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</div>}
 
-      <div className="grid gap-6 xl:grid-cols-[240px_1fr_300px]">
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <p className="text-sm font-bold uppercase tracking-wide text-gray-500">Filters</p>
-            <div className="mt-4 space-y-3">
-              {totals.map((option) => (
-                <label key={option.id} className="flex cursor-pointer items-center justify-between gap-3 text-sm text-gray-700">
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={enabledTypes[option.id]}
-                      onChange={() => toggleType(option.id)}
-                      className="h-4 w-4 rounded border-gray-300 text-purple-600"
-                    />
-                    <span className={`h-2.5 w-2.5 rounded-full ${option.dot}`} />
-                    {option.label}
-                  </span>
-                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">{option.count}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </aside>
+      <section className="min-w-0">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-3xl font-bold text-gray-900">{formatHeading(activeDate, view)}</h2>
+          <p className="text-sm font-semibold text-gray-500">{loading ? "Loading..." : `${filteredItems.length} visible items`}</p>
+        </div>
 
-        <section className="min-w-0">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{formatHeading(activeDate, view)}</h2>
-            <p className="text-sm text-gray-500">{loading ? "Loading..." : `${filteredItems.length} visible items`}</p>
-          </div>
-
-          {view !== "day" && (
-            <div className="grid grid-cols-7 rounded-t-lg border-x border-t border-gray-200 bg-gray-100">
-              {WEEKDAYS.map((day) => (
-                <div key={day} className="px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-500">{day}</div>
-              ))}
-            </div>
-          )}
-
-          <div className={`grid overflow-hidden rounded-b-lg border-l border-gray-200 ${view === "day" ? "grid-cols-1 rounded-t-lg border-t" : "grid-cols-7"}`}>
-            {visibleDays.map((day) => {
-              const dateKey = toDateKey(day);
-              const dayItems = itemsByDate.get(dateKey) ?? [];
-              return (
-                <div
-                  key={dateKey}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={(event) => handleDrop(dateKey, event.dataTransfer.getData("text/plain"))}
-                  className={dayCellClass(day)}
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <button onClick={() => { setActiveDate(day); setView("day"); }} className="text-sm font-bold hover:text-purple-700">
-                      {day.getDate()}
-                    </button>
-                    <span className="text-xs text-gray-400">{dayItems.length || ""}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {dayItems.map((item) => {
-                      const meta = getTypeMeta(item.type);
-                      return (
-                        <button
-                          key={`${item.type}-${item.id}`}
-                          draggable={!busy}
-                          onDragStart={(event) => event.dataTransfer.setData("text/plain", `${item.type}:${item.id}`)}
-                          onClick={() => setSelectedItem(item)}
-                          className={`w-full rounded-md border px-2 py-2 text-left text-xs font-semibold shadow-sm transition hover:shadow ${meta.color}`}
-                        >
-                          <span className="block truncate">{item.title}</span>
-                          <span className="mt-1 block truncate text-[11px] font-normal opacity-80">{meta.label} · {item.status}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <p className="text-sm font-bold uppercase tracking-wide text-gray-500">Quick Preview</p>
-            {selectedItem ? (
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-lg font-bold text-gray-900">{selectedItem.title}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getTypeMeta(selectedItem.type).color}`}>{getTypeMeta(selectedItem.type).label}</span>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClass(selectedItem.status)}`}>{selectedItem.status}</span>
-                  </div>
-                </div>
-                {selectedItem.description && <p className="text-sm leading-6 text-gray-600">{selectedItem.description}</p>}
-                <label className="block text-sm font-semibold text-gray-700">
-                  Scheduled Date
-                  <input
-                    type="date"
-                    value={quickEditDate}
-                    onChange={(event) => setQuickEditDate(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                  />
-                </label>
-                <button
-                  onClick={() => quickEditDate && rescheduleItem(selectedItem, quickEditDate)}
-                  disabled={busy || !quickEditDate}
-                  className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
-                >
-                  Save Date
-                </button>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className={view === "day" ? "min-w-[420px]" : "min-w-[1120px]"}>
+            {view !== "day" && (
+              <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-100">
+                {WEEKDAYS.map((day) => (
+                  <div key={day} className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-500">{day}</div>
+                ))}
               </div>
-            ) : (
-              <p className="mt-4 text-sm leading-6 text-gray-500">Select a calendar item to preview or edit its date.</p>
             )}
+
+            <div className={`grid ${view === "day" ? "grid-cols-1" : "grid-cols-7"}`}>
+              {visibleDays.map((day) => {
+                const dateKey = toDateKey(day);
+                const dayItems = itemsByDate.get(dateKey) ?? [];
+                const previewItems = dayItems.slice(0, 5);
+                const hiddenCount = dayItems.length - previewItems.length;
+
+                return (
+                  <div
+                    key={dateKey}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedDate(dateKey)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedDate(dateKey);
+                      }
+                    }}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => handleDrop(dateKey, event.dataTransfer.getData("text/plain"))}
+                    className={dayCellClass(day)}
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-bold leading-none">{day.getDate()}</p>
+                        {view === "day" && (
+                          <p className="mt-1 text-sm font-semibold text-gray-500">
+                            {day.toLocaleDateString("id-ID", { weekday: "long", month: "long", year: "numeric" })}
+                          </p>
+                        )}
+                      </div>
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-500">{dayItems.length}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {previewItems.map((item) => {
+                        const meta = getTypeMeta(item.type);
+                        return (
+                          <div
+                            key={`${item.type}-${item.id}`}
+                            draggable={!busy}
+                            onDragStart={(event) => event.dataTransfer.setData("text/plain", `${item.type}:${item.id}`)}
+                            className={`rounded-md border px-3 py-2 text-xs shadow-sm transition hover:shadow ${meta.color}`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="truncate font-bold">{item.title}</span>
+                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${getStatusClass(item.status)}`}>{item.status}</span>
+                            </div>
+                            <p className="mt-1 truncate text-[11px] font-semibold opacity-80">{meta.label}{item.category ? ` / ${item.category}` : ""}</p>
+                          </div>
+                        );
+                      })}
+                      {hiddenCount > 0 && (
+                        <div className="rounded-md border border-dashed border-gray-300 px-3 py-2 text-xs font-bold text-gray-500">
+                          +{hiddenCount} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </aside>
-      </div>
+        </div>
+      </section>
+
+      <button
+        type="button"
+        onClick={() => setFiltersOpen((current) => !current)}
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg shadow-purple-900/25 transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+        aria-label="Open calendar filters"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 6h16" />
+          <path d="M7 12h10" />
+          <path d="M10 18h4" />
+        </svg>
+      </button>
+
+      {filtersOpen && (
+        <div className="fixed bottom-24 right-6 z-40 w-[min(320px,calc(100vw-3rem))] rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm font-bold uppercase tracking-wide text-gray-500">Filters</p>
+            <button type="button" onClick={() => setFiltersOpen(false)} className="rounded-md px-2 py-1 text-sm font-bold text-gray-500 hover:bg-gray-100">Close</button>
+          </div>
+          <div className="space-y-3">
+            {totals.map((option) => (
+              <label key={option.id} className="flex cursor-pointer items-center justify-between gap-3 text-sm text-gray-700">
+                <span className="flex min-w-0 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={enabledTypes[option.id]}
+                    onChange={() => toggleType(option.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-purple-600"
+                  />
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${option.dot}`} />
+                  <span className="truncate">{option.label}</span>
+                </span>
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">{option.count}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selectedDate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setSelectedDate(null)}>
+          <div className="max-h-[86vh] w-full max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-5">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide text-gray-500">Date Details</p>
+                <h3 className="mt-1 text-2xl font-bold text-gray-900">{selectedDateLabel}</h3>
+                <p className="mt-1 text-sm font-semibold text-gray-500">{selectedDateItems.length} visible items</p>
+              </div>
+              <button type="button" onClick={() => setSelectedDate(null)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50">Close</button>
+            </div>
+            <div className="max-h-[62vh] overflow-y-auto p-5">
+              {selectedDateItems.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedDateItems.map((item) => {
+                    const meta = getTypeMeta(item.type);
+                    return (
+                      <article key={`${item.type}-${item.id}`} className="rounded-lg border border-gray-200 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <h4 className="text-lg font-bold text-gray-900">{item.title}</h4>
+                            {item.description && <p className="mt-2 text-sm leading-6 text-gray-600">{item.description}</p>}
+                          </div>
+                          <div className="flex shrink-0 flex-wrap gap-2">
+                            <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${meta.color}`}>{meta.label}</span>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${getStatusClass(item.status)}`}>{item.status}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-gray-500">
+                          {item.category && <span className="rounded-md bg-gray-100 px-2 py-1">{item.category}</span>}
+                          <span className="rounded-md bg-gray-100 px-2 py-1">{item.contentId}</span>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-sm font-semibold text-gray-500">No visible content on this date.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

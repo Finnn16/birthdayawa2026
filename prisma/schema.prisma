@@ -32,6 +32,8 @@ model User {
   gardenItems                GardenItem[]
   coupleEventsCreated        CoupleEvent[]         @relation("CoupleEventCreator")
   heroMessagesCreated        HeroMessage[]          @relation("HeroMessageCreator")
+  notificationCampaignsCreated NotificationCampaign[] @relation("NotificationCampaignCreator")
+  notificationDeliveryLogs    NotificationDeliveryLog[]
 
   @@index([phoneNumber])
   @@map("users")
@@ -352,4 +354,66 @@ model HeroMessage {
   @@index([isActive, activeDate(sort: Desc), createdAt(sort: Desc)])
   @@index([publishStatus, publishAt])
   @@map("hero_messages")
+}
+
+model NotificationCampaign {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  notificationType String                    @map("notification_type")
+  triggerType      String                    @map("trigger_type")
+  sendTime         String                    @map("send_time")
+  startDate        DateTime?                 @map("start_date") @db.Date
+  endDate          DateTime?                 @map("end_date") @db.Date
+  timezone         String                    @default("Asia/Jakarta")
+  publishStatus    String                    @default("published") @map("publish_status")
+  publishAt        DateTime?                 @map("publish_at") @db.Timestamptz(6)
+  isActive         Boolean                   @default(true) @map("is_active")
+  metadataJson     Json?                     @map("metadata_json")
+  lastSentAt       DateTime?                 @map("last_sent_at") @db.Timestamptz(6)
+  createdBy        String?                   @map("created_by") @db.Uuid
+  createdAt        DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator          User?                     @relation("NotificationCampaignCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  messages         NotificationMessage[]
+  deliveryLogs     NotificationDeliveryLog[]
+
+  @@index([isActive, triggerType, sendTime])
+  @@index([publishStatus, publishAt])
+  @@map("notification_campaigns")
+}
+
+model NotificationMessage {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaignId String               @map("campaign_id") @db.Uuid
+  title      String
+  body       String
+  weight     Int                  @default(1)
+  isActive   Boolean              @default(true) @map("is_active")
+  createdAt  DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  campaign   NotificationCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, isActive])
+  @@map("notification_messages")
+}
+
+model NotificationDeliveryLog {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaignId          String?               @map("campaign_id") @db.Uuid
+  userId              String?               @map("user_id") @db.Uuid
+  notificationTitle   String                @map("notification_title")
+  notificationBody    String                @map("notification_body")
+  status              String                @default("pending")
+  deliveryChannel     String                @default("whatsapp") @map("delivery_channel")
+  providerMessageId   String?               @map("provider_message_id")
+  errorMessage        String?               @map("error_message")
+  sentAt              DateTime?             @map("sent_at") @db.Timestamptz(6)
+  deliveredAt         DateTime?             @map("delivered_at") @db.Timestamptz(6)
+  createdAt           DateTime?             @default(now()) @map("created_at") @db.Timestamptz(6)
+  campaign            NotificationCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  user                User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@map("notification_delivery_logs")
 }

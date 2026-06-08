@@ -85,51 +85,54 @@ export function MemoryVault() {
           <p className="text-sm">{error}</p>
         </div>
       ) : (
-        <div className="relative">
-          <div className="absolute left-6 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-200 to-pink-200" />
-
-          <div className="space-y-6 pl-20">
-            {filteredMemories.length > 0 ? (
-              filteredMemories.map((memory) => (
-                <div key={memory.id} className="relative">
-                  <div
-                    className={`absolute -left-16 top-2 w-5 h-5 rounded-full border-4 border-white ${memory.color}`}
-                  />
-
-                  <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-500">{memory.icon}</span>
-                        <div>
-                          <h3 className="font-bold text-gray-900 text-lg">
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          {filteredMemories.length > 0 ? (
+            <div className="overflow-x-auto pb-4">
+              <div className="flex min-w-max gap-4">
+                {filteredMemories.map((memory) => (
+                  <article
+                    key={memory.id}
+                    className="w-72 shrink-0 rounded-lg border border-gray-200 bg-gray-50 p-4 transition-shadow hover:shadow-md"
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span
+                          className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white ${memory.color}`}
+                        >
+                          {memory.icon.slice(0, 2)}
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-bold text-gray-900">
                             {memory.title}
                           </h3>
-                          <p className="text-sm text-gray-500">{memory.date}</p>
+                          <p className="text-sm font-semibold text-gray-500">{memory.date}</p>
                         </div>
                       </div>
-                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold capitalize">
+                      <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold capitalize text-gray-700">
                         {memory.type}
                       </span>
                     </div>
 
                     {memory.description && (
-                      <p className="text-gray-600 mb-3">{memory.description}</p>
+                      <p className="line-clamp-3 text-sm leading-6 text-gray-600">
+                        {memory.description}
+                      </p>
                     )}
 
                     {memory.relatedData && (
-                      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
+                      <div className="mt-4 max-h-24 overflow-auto rounded-lg bg-white p-3 text-xs text-gray-600">
                         {JSON.stringify(memory.relatedData, null, 2)}
                       </div>
                     )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600">No memories found</p>
+                  </article>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No memories found</p>
+            </div>
+          )}
         </div>
       )}
 
