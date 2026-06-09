@@ -8,11 +8,169 @@
 
 .topbar {
   width: min(1180px, 100%);
-  margin: 0 auto 20px;
+  margin: 0 auto 18px;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 16px;
+}
+
+.dashboardFlow {
+  width: min(1180px, calc(100vw - 48px));
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.flowSection {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.sectionHeader h2 {
+  margin-top: 2px;
+  color: #3d3d3d;
+  font-size: var(--text-section-title-size);
+  font-weight: var(--text-section-title-weight);
+  line-height: var(--text-section-title-line);
+}
+
+.profileSummary {
+  width: min(1180px, 100%);
+  margin: 0 auto 20px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 124, 111, 0.14);
+  background: rgba(255, 253, 251, 0.76);
+  padding: 16px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
+}
+
+.levelBadge {
+  min-width: 112px;
+  border-radius: 10px;
+  background: #3d3d3d;
+  color: #fffaf5;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 12px;
+}
+
+.levelBadge span {
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+  color: rgba(255, 250, 245, 0.72);
+}
+
+.levelBadge strong {
+  font-size: 42px;
+  line-height: 0.9;
+}
+
+.profileProgress {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.profileSummaryHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profileSummaryHeader h2 {
+  font-size: var(--text-card-title-size);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-line);
+  color: #3d3d3d;
+}
+
+.statBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.statBadge {
+  min-height: 44px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 124, 111, 0.14);
+  background: rgba(255, 253, 251, 0.68);
+  padding: 8px 11px;
+}
+
+.statBadge small {
+  color: #8b7c6f;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+
+.statBadge strong {
+  color: #3d3d3d;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  line-height: var(--text-caption-line);
+}
+
+.progressBlock {
+  display: grid;
+  gap: 7px;
+}
+
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #8b7c6f;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  line-height: var(--text-caption-line);
+}
+
+.progressTrackV2 {
+  height: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(139, 124, 111, 0.12);
+  border: 1px solid rgba(139, 124, 111, 0.14);
+}
+
+.progressTrackV2 span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b7c6f, #d4646f);
 }
 
 .hero h1,
@@ -23,8 +181,10 @@
 
 .eyebrow {
   color: #8b7c6f;
-  font-size: 10px;
-  font-weight: 800;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
   text-transform: uppercase;
 }
 
@@ -60,10 +220,10 @@
 
 .hero {
   width: min(1180px, 100%);
-  margin: 0 auto 28px;
-  min-height: 360px;
+  margin: 0 auto 22px;
+  min-height: 300px;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
   align-items: stretch;
   gap: 24px;
   padding: clamp(22px, 4vw, 42px);
@@ -84,17 +244,16 @@
 
 .countdownTitle {
   color: #3d3d3d;
-  font-size: clamp(22px, 4vw, 38px);
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
+  font-size: var(--text-section-title-size);
+  font-weight: var(--text-section-title-weight);
+  line-height: var(--text-section-title-line);
 }
 
 .countdownMeta {
   color: #7a7a7a;
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1.45;
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  line-height: var(--text-caption-line);
   margin-top: 14px;
 }
 
@@ -107,21 +266,36 @@
 
 .hero h1 {
   margin-top: 10px;
-  font-size: clamp(54px, 11vw, 96px);
-  line-height: 0.86;
+  font-size: var(--text-hero-title-size);
+  font-weight: var(--text-hero-title-weight);
+  line-height: var(--text-hero-title-line);
   max-width: 760px;
 }
 
 .hero h2 {
-  font-size: clamp(24px, 4vw, 64px);
-  line-height: 1;
+  font-size: var(--text-hero-title-size);
+  font-weight: var(--text-hero-title-weight);
+  line-height: var(--text-hero-title-line);
   margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .heroCopy p {
   color: #7a7a7a;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-line);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.typewriterHeroTitle {
+  color: #3d3d3d;
 }
 
 .letterButton {
@@ -179,6 +353,15 @@
 .letterTeaserButton svg {
   width: 29px;
   height: 29px;
+}
+
+.letterTeaserButton > span:not(.letterTeaserSeal) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .letterTeaserSeal {
@@ -253,6 +436,10 @@
   background: rgba(255, 253, 251, 0.7);
   backdrop-filter: blur(8px);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .layout {
@@ -327,19 +514,22 @@
 
 .taskPaneActive {
   display: block;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  overflow: hidden;
 }
 
 .panel {
-  padding: clamp(14px, 2.5vw, 20px);
+  padding: clamp(18px, 2.6vw, 26px);
 }
 
 .panelHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .panelHeader h2 {
@@ -358,6 +548,9 @@
 }
 
 .moodStage {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 146px;
   border-radius: 8px;
   border: 1px solid rgba(139, 124, 111, 0.12);
@@ -365,9 +558,9 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
-  padding: 18px;
-  margin-bottom: 16px;
+  gap: 22px;
+  padding: 22px;
+  margin-bottom: 20px;
 }
 
 .moodEmoji {
@@ -398,13 +591,15 @@
 }
 
 .sliderWrap {
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .moodSlider {
   --mood-progress: 77%;
   --mood-color: #a89a8f;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: 44px;
   appearance: none;
   background: transparent;
@@ -466,6 +661,8 @@
 
 .note {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   resize: vertical;
   border-radius: 8px;
   border: 1px solid rgba(139, 124, 111, 0.15);
@@ -483,8 +680,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .actionRow p {
@@ -530,7 +727,7 @@
 .questList,
 .calendarList {
   display: grid;
-  gap: 6px;
+  gap: 10px;
 }
 
 .shopPreview {
@@ -557,8 +754,8 @@
 
 .walletCard {
   display: grid;
-  gap: 6px;
-  padding: 10px;
+  gap: 10px;
+  padding: 16px;
   border-radius: 8px;
   border: 1px solid rgba(139, 124, 111, 0.15);
   background: rgba(255, 253, 251, 0.6);
@@ -566,8 +763,10 @@
 
 .walletLabel {
   color: #8b7c6f;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
   text-transform: uppercase;
 }
 
@@ -585,8 +784,9 @@
 
 .walletAmount span {
   color: #8b7c6f;
-  font-size: 16px;
-  font-weight: 900;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  line-height: var(--text-caption-line);
 }
 
 .heartStack {
@@ -642,8 +842,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
+  gap: 18px;
+  padding: 20px;
   border-radius: 8px;
   border: 1px solid rgba(139, 124, 111, 0.12);
   background: rgba(255, 253, 251, 0.5);
@@ -684,6 +884,544 @@
   border-color: rgba(139, 124, 111, 0.15) !important;
 }
 
+.activityTabs {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 250, 245, 0.92);
+  border: 1px solid rgba(139, 124, 111, 0.14);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(61, 61, 61, 0.06);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.activityTab,
+.activityTabActive {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.activityTab > span:first-child,
+.activityTabActive > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityTab {
+  background: transparent;
+  color: #7a7a7a;
+}
+
+.activityTabActive {
+  background: #fefdfb;
+  color: #3d3d3d;
+  border-color: rgba(139, 124, 111, 0.16);
+  box-shadow: 0 2px 8px rgba(61, 61, 61, 0.06);
+}
+
+.statusDone,
+.statusPending {
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.statusDone {
+  background: rgba(81, 132, 96, 0.12);
+  color: #3f7850;
+}
+
+.statusPending {
+  background: rgba(212, 100, 111, 0.1);
+  color: #d4646f;
+}
+
+.rewardCenterGrid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.nextRewardCard {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  align-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.56);
+  padding: 16px;
+}
+
+.nextRewardCard strong {
+  color: #3d3d3d;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.nextRewardCard p,
+.nextRewardCard small {
+  color: #7a7a7a;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.rewardProgress {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(139, 124, 111, 0.12);
+  border: 1px solid rgba(139, 124, 111, 0.14);
+}
+
+.rewardProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d4646f, #a89a8f);
+}
+
+.twoColumnBand {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+  gap: 18px;
+  align-items: stretch;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.calendarPanel {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.upcomingEventCard {
+  display: grid;
+  gap: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 100, 111, 0.18);
+  background: linear-gradient(180deg, rgba(255, 247, 239, 0.86), rgba(255, 253, 251, 0.68));
+  padding: 18px;
+}
+
+.upcomingEventCard span {
+  color: #d4646f;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+
+.upcomingEventCard strong {
+  color: #3d3d3d;
+  font-size: var(--text-card-title-size);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-line);
+}
+
+.upcomingEventCard time {
+  color: #8b7c6f;
+  font-size: var(--text-caption-size);
+  font-weight: 600;
+  line-height: var(--text-caption-line);
+}
+
+.calendarGardenSummary {
+  display: grid;
+  gap: 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(72, 132, 89, 0.16);
+  background:
+    linear-gradient(135deg, rgba(236, 248, 239, 0.86), rgba(255, 253, 251, 0.72));
+  padding: 18px;
+}
+
+.calendarGardenHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calendarGardenHeader span {
+  color: #488459;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+
+.calendarGardenHeader strong {
+  color: #2f5f3c;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  line-height: var(--text-caption-line);
+}
+
+.calendarGardenSummary p {
+  color: #6f756a;
+  font-size: var(--text-caption-size);
+  font-weight: 500;
+  line-height: var(--text-caption-line);
+}
+
+.calendarGardenSummary small {
+  color: #8b7c6f;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
+}
+
+.calendarGardenProgress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(139, 124, 111, 0.14);
+}
+
+.calendarGardenProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #488459, #d6b25e);
+}
+
+.calendarWeatherCard {
+  display: grid;
+  gap: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(91, 127, 163, 0.16);
+  background:
+    linear-gradient(135deg, rgba(232, 243, 250, 0.86), rgba(255, 253, 251, 0.72));
+  padding: 18px;
+}
+
+.calendarWeatherHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calendarWeatherHeader span {
+  color: #5b7fa3;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+
+.calendarWeatherHeader strong {
+  color: #3d5f7a;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  line-height: var(--text-caption-line);
+}
+
+.calendarWeatherMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.calendarWeatherMain span {
+  min-width: 48px;
+  border-radius: 999px;
+  background: rgba(91, 127, 163, 0.12);
+  color: #3d5f7a;
+  padding: 7px 10px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.calendarWeatherMain strong {
+  color: #3d3d3d;
+  font-size: var(--text-section-title-size);
+  font-weight: var(--text-section-title-weight);
+  line-height: var(--text-section-title-line);
+}
+
+.calendarWeatherCard p {
+  color: #6f756a;
+  font-size: var(--text-caption-size);
+  font-weight: 500;
+  line-height: var(--text-caption-line);
+}
+
+.calendarWeatherMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.calendarWeatherMeta span {
+  border-radius: 999px;
+  background: rgba(255, 253, 251, 0.66);
+  color: #5b7fa3;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.calendarWeatherAdvice {
+  display: grid;
+  gap: 4px;
+  border-radius: 8px;
+  background: rgba(255, 253, 251, 0.62);
+  border: 1px solid rgba(91, 127, 163, 0.1);
+  padding: 9px 10px;
+}
+
+.calendarWeatherAdvice span {
+  color: #5b7fa3;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.calendarWeatherAdvice p {
+  color: #3d3d3d;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.insightGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.insightCard {
+  min-height: 132px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.7);
+  padding: 15px;
+}
+
+.insightCard p {
+  color: #8b7c6f;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.insightCard strong {
+  color: #3d3d3d;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.insightCard span {
+  color: #7a7a7a;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.42;
+}
+
+.futureGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.futureSlot {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(139, 124, 111, 0.22);
+  background: rgba(139, 124, 111, 0.04);
+  color: #8b7c6f;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.futureSlot small {
+  color: #a89a8f;
+  text-transform: uppercase;
+}
+
+.historySummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.historyTimelineScroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0 12px;
+}
+
+.historyTimelineTrack {
+  display: flex;
+  min-width: max-content;
+  gap: 16px;
+}
+
+.historyTimelineCard {
+  width: 240px;
+  min-height: 132px;
+  shrink: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  position: relative;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  background: rgba(255, 253, 251, 0.7);
+  padding: 18px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.historyTimelineCard:hover {
+  box-shadow: 0 8px 24px rgba(61, 61, 61, 0.08);
+}
+
+.historyTimelineCard::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: -12px;
+  top: 26px;
+  height: 2px;
+  background: rgba(139, 124, 111, 0.12);
+}
+
+.historyTimelineCard:last-child::before {
+  display: none;
+}
+
+.historyTimelineCard > div {
+  position: relative;
+  z-index: 1;
+}
+
+.historyCardTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.historyDot {
+  width: 12px;
+  height: 12px;
+  shrink: 0;
+  border-radius: 999px;
+  background: #a89a8f;
+  box-shadow: 0 0 0 5px rgba(168, 154, 143, 0.12);
+}
+
+.historyCardTop p {
+  color: #8b7c6f;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.historyCardTop time {
+  display: block;
+  margin-top: 4px;
+  color: #3d3d3d;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.historyCardMood {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.historyCardMood span {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.historyCardMood strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.historyCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.historyCardMeta > span {
+  border-radius: 999px;
+  background: rgba(139, 124, 111, 0.08);
+  color: #8b7c6f;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.historyCardMeta > .heroGeneratedBadge {
+  background: rgba(81, 132, 96, 0.12);
+  color: #3f7850;
+}
+
+.heroGeneratedBadge {
+  border-radius: 999px;
+  background: rgba(81, 132, 96, 0.12);
+  color: #3f7850;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .calendarRow {
   display: grid;
   gap: 12px;
@@ -712,7 +1450,7 @@
 
 .gardenPanel {
   display: grid;
-  gap: 12px;
+  gap: 18px;
 }
 
 .gardenStageBadge {
@@ -734,7 +1472,7 @@
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: 18px;
+  gap: 22px;
   border-radius: 10px;
   border: 1px solid rgba(81, 132, 96, 0.18);
   background:
@@ -744,7 +1482,7 @@
       rgba(230, 218, 196, 0.78) 54% 100%
     ),
     #f8fbf3;
-  padding: 18px;
+  padding: 22px;
   box-shadow: inset 0 -24px 40px rgba(106, 82, 58, 0.08);
 }
 
@@ -1995,8 +2733,39 @@
   }
 
   .hero,
-  .layout {
+  .layout,
+  .twoColumnBand {
     grid-template-columns: 1fr;
+  }
+
+  .calendarPanel {
+    padding: 18px;
+  }
+
+  .profileSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .profileSummaryHeader,
+  .sectionHeader {
+    flex-direction: column;
+  }
+
+  .statBadgeRow {
+    justify-content: flex-start;
+  }
+
+  .rewardCenterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .rewardCenterGrid .primaryButton {
+    width: 100%;
+  }
+
+  .insightGrid,
+  .futureGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .countdown {
@@ -2034,6 +2803,10 @@
   }
 
   .topbar,
+  .activityTabs,
+  .historySummaryGrid,
+  .insightGrid,
+  .futureGrid,
   .panelHeader,
   .actionRow,
   .questCard,
@@ -2042,6 +2815,18 @@
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;
+  }
+
+  .activityTabs,
+  .historySummaryGrid,
+  .insightGrid,
+  .futureGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .activityTab,
+  .activityTabActive {
+    min-height: 50px;
   }
 
   .topbar {

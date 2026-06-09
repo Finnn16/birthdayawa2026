@@ -1,0 +1,44 @@
+.base {
+  margin: 0;
+  color: inherit;
+  font-family: var(--font-primary);
+  letter-spacing: 0;
+}
+
+.label {
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+
+.caption {
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-caption-weight);
+  line-height: var(--text-caption-line);
+}
+
+.body {
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
+  line-height: var(--text-body-line);
+}
+
+.cardTitle {
+  font-size: var(--text-card-title-size);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-line);
+}
+
+.sectionTitle {
+  font-size: var(--text-section-title-size);
+  font-weight: var(--text-section-title-weight);
+  line-height: var(--text-section-title-line);
+}
+
+.heroTitle {
+  font-size: var(--text-hero-title-size);
+  font-weight: var(--text-hero-title-weight);
+  line-height: var(--text-hero-title-line);
+}

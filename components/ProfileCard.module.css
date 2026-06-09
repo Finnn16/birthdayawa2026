@@ -32,9 +32,9 @@
   place-items: center;
   border-radius: 999px;
   color: #fefdfb;
-  font-family: "Syne", sans-serif;
-  font-size: 14px;
-  font-weight: 900;
+  font-family: var(--font-primary);
+  font-size: var(--text-caption-size);
+  font-weight: 700;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
@@ -96,8 +96,9 @@
 
 .identity h2 {
   color: var(--text);
-  font-size: 18px;
-  line-height: 1.1;
+  font-size: var(--text-card-title-size);
+  font-weight: var(--text-card-title-weight);
+  line-height: var(--text-card-title-line);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -105,9 +106,9 @@
 
 .identity p {
   color: #8b7c6f;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.25;
+  font-size: var(--text-caption-size);
+  font-weight: 500;
+  line-height: var(--text-caption-line);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -120,27 +121,35 @@
 
 .progressBlock {
   display: grid;
-  gap: 5px;
+  gap: 8px;
 }
 
 .progressTrack {
-  height: 8px;
+  height: 16px;
   border-radius: 999px;
   background: rgba(139, 124, 111, 0.12);
-  border: 1px solid rgba(139, 124, 111, 0.1);
+  border: 1px solid rgba(139, 124, 111, 0.14);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
   border-radius: inherit;
-  background: #a89a8f;
+  background: linear-gradient(90deg, #8b7c6f, #d4646f);
 }
 
 .progressBlock p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--text-caption-size);
+  font-weight: 500;
+  line-height: var(--text-caption-line);
+}
+
+.progressBlock p strong {
+  color: #3d3d3d;
 }
 
 .footer {
@@ -156,9 +165,10 @@
   border-radius: 999px;
   background: rgba(168, 154, 143, 0.15);
   color: #8b7c6f;
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
   border: 1px solid rgba(139, 124, 111, 0.2);
 }
 
@@ -175,6 +185,10 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
+  border-radius: 8px;
+  background: rgba(255, 253, 251, 0.58);
+  border: 1px solid rgba(139, 124, 111, 0.12);
+  padding: 7px 9px;
 }
 
 .statIcon {
@@ -201,14 +215,17 @@
 
 .statText strong {
   color: #3d3d3d;
-  font-size: 13px;
-  line-height: 1.05;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  line-height: var(--text-caption-line);
 }
 
 .statText small {
   color: #7a7a7a;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line);
+  letter-spacing: var(--text-label-tracking);
 }
 
 @media (max-width: 720px) {
@@ -226,11 +243,11 @@
   }
 
   .identity h2 {
-    font-size: 16px;
+    font-size: var(--text-card-title-size);
   }
 
   .identity p {
-    font-size: 12px;
+    font-size: var(--text-caption-size);
   }
 
   .expandIcon {

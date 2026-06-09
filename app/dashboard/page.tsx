@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { createClient } from "@/lib/supabase";
@@ -10,6 +10,14 @@ import { type MiniGame } from "@/lib/minigames";
 import { calculateMoodXP } from "@/lib/xp";
 import { LoadingButton, LoadingSpinner } from "@/components/LoadingSpinner";
 import ProfileCard from "@/components/ProfileCard";
+import {
+  TextBody,
+  TextCaption,
+  TextCardTitle,
+  TextHeroTitle,
+  TextLabel,
+  TextSectionTitle,
+} from "@/components/Typography";
 import { getTodayDateString } from "@/lib/date";
 import { isLetterUnlocked } from "@/lib/letter/letterContent";
 import styles from "./dashboard.module.css";
@@ -62,12 +70,36 @@ type HeroMessageData = {
   title: string;
   body: string;
   tone?: string;
+  source?: string;
 };
 
 type CountdownTarget = {
   title: string;
   eventTitle: string;
   date: string;
+};
+
+type WeatherSnapshot = {
+  label: string;
+  tone: string;
+  temperature: number | null;
+  apparentTemperature: number | null;
+  humidity: number | null;
+  precipitation: number | null;
+  windSpeed: number | null;
+  isDay: boolean;
+  daily: {
+    maxTemperature: number | null;
+    minTemperature: number | null;
+    precipitationProbability: number | null;
+  };
+  tomorrow: {
+    label: string;
+    willRain: boolean;
+    precipitationProbability: number | null;
+    advice: string;
+  };
+  updatedAt: string | null;
 };
 
 async function readJsonResponse(res: Response) {
@@ -145,7 +177,7 @@ function getNextCountdownTarget(events: any[]): CountdownTarget | null {
     titleText.includes("birthday") || titleText.includes("ulang tahun");
 
   return {
-    title: isBirthday ? "Birthday countdown" : `${eventTitle} countdown`,
+    title: isBirthday ? "Hitung Mundur Ulang Tahun" : "Hitung Mundur",
     eventTitle,
     date: nextEvent.event_date.slice(0, 10),
   };
@@ -157,6 +189,76 @@ function formatReadableDate(dateString: string): string {
     month: "long",
     year: "numeric",
   });
+}
+
+function averageMood(history: DashboardData["history"]) {
+  if (!history.length) return 0;
+  return (
+    Math.round(
+      (history.reduce((sum, item) => sum + item.rating, 0) / history.length) *
+        10,
+    ) / 10
+  );
+}
+
+function getMoodInsight(history: DashboardData["history"]) {
+  const currentWeek = history.slice(0, 7);
+  const previousWeek = history.slice(7, 14);
+  const currentAverage = averageMood(currentWeek);
+  const previousAverage = averageMood(previousWeek);
+
+  if (!previousWeek.length) {
+    return {
+      average: currentAverage,
+      trend: currentWeek.length
+        ? "Data minggu ini mulai kebaca pelan-pelan."
+        : "Belum ada data mood minggu ini.",
+    };
+  }
+
+  if (currentAverage > previousAverage) {
+    return {
+      average: currentAverage,
+      trend: "Mood minggu ini lebih baik dibanding minggu lalu.",
+    };
+  }
+
+  if (currentAverage < previousAverage) {
+    return {
+      average: currentAverage,
+      trend: "Mood minggu ini sedikit turun, jadi kita pelanin ritmenya.",
+    };
+  }
+
+  return {
+    average: currentAverage,
+    trend: "Mood minggu ini cukup stabil dibanding minggu lalu.",
+  };
+}
+
+function getHistorySummary(
+  history: DashboardData["history"],
+  currentStreak: number,
+) {
+  const ratings = history.map((item) => item.rating);
+  return {
+    highest: ratings.length ? Math.max(...ratings) : 0,
+    lowest: ratings.length ? Math.min(...ratings) : 0,
+    average: averageMood(history),
+    currentStreak,
+  };
+}
+
+function getNextReward(rewards: any[], heartsBalance: number) {
+  return (
+    [...rewards]
+      .filter((reward) => Number(reward.cost_hearts ?? 0) > heartsBalance)
+      .sort(
+        (a, b) => Number(a.cost_hearts ?? 0) - Number(b.cost_hearts ?? 0),
+      )[0] ??
+    rewards[0] ??
+    null
+  );
 }
 
 const emptyEngagementData: EngagementData = {
@@ -210,6 +312,9 @@ export default function Dashboard() {
   } | null>(null);
   const [error, setError] = useState("");
   const [username, setUsername] = useState("");
+  const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState("");
 
   const fetchMiniGames = useCallback(async () => {
     const res = await fetch("/api/minigames");
@@ -226,6 +331,27 @@ export default function Dashboard() {
     if (res.status === 401) return;
     const json = await readJsonResponse(res);
     setHeroMessage(json.heroMessage ?? defaultHeroMessage);
+  }, []);
+
+  const fetchWeather = useCallback(async () => {
+    setWeatherLoading(true);
+    setWeatherError("");
+    const res = await fetch("/api/weather");
+    if (res.status === 401) {
+      setWeatherLoading(false);
+      return;
+    }
+
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      setWeather(null);
+      setWeatherError(json.error ?? json.details ?? "Cuaca belum bisa dimuat.");
+      setWeatherLoading(false);
+      return;
+    }
+
+    setWeather(json.weather ?? null);
+    setWeatherLoading(false);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -302,6 +428,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
+    fetchWeather();
     createClient()
       .auth.getUser()
       .then(({ data: d }) => {
@@ -309,7 +436,7 @@ export default function Dashboard() {
           d.user?.user_metadata?.username || d.user?.email?.split("@")[0] || "",
         );
       });
-  }, [fetchData]);
+  }, [fetchData, fetchWeather]);
 
   useEffect(() => {
     if (!letterTeaserOpen) return;
@@ -490,6 +617,24 @@ export default function Dashboard() {
     () => getNextCountdownTarget(engagement.calendar.events),
     [engagement.calendar.events],
   );
+  const questCompleted =
+    engagement.questAssignments.length > 0 &&
+    engagement.questAssignments.every((assignment) =>
+      engagement.questCompletions.some(
+        (completion) => completion.assignment_id === assignment.id,
+      ),
+    );
+  const minigameCompleted =
+    miniGames.length > 0 &&
+    miniGames.every((game) => completionByGameId[game.id]?.is_correct);
+  const historySummary = getHistorySummary(
+    data?.history ?? [],
+    data?.currentStreak ?? 0,
+  );
+  const nextReward = getNextReward(
+    engagement.rewards,
+    engagement.heartsBalance,
+  );
 
   if (loading) {
     return (
@@ -562,174 +707,95 @@ export default function Dashboard() {
         onClick={handleLetterTeaser}
       />
 
-      <motion.section
-        className={styles.layout}
+      <motion.div
+        className={styles.dashboardFlow}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <div className={styles.primaryColumn}>
-          <section className={styles.todayPanel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Daily hub</p>
-                <h2>Satu-satu duls saja yaa</h2>
-              </div>
-              <span className={styles.rewardBadge}>
-                +{nextMoodXpPreview} XP ready
-              </span>
-            </div>
-
-            <div className={styles.segmented} aria-label="Pilih aktivitas">
-              <TaskButton
-                active={activeTask === "mood"}
-                label="Mood"
-                onClick={() => setActiveTask("mood")}
-              />
-              <TaskButton
-                active={activeTask === "quest"}
-                label="Quest"
-                onClick={() => setActiveTask("quest")}
-              />
-              <TaskButton
-                active={activeTask === "minigame"}
-                label="Mini-game"
-                onClick={() => setActiveTask("minigame")}
-              />
-            </div>
-
-            <motion.div
-              className={
-                activeTask === "mood" ? styles.taskPaneActive : styles.taskPane
+        <DailyActivitiesSection
+          activeTask={activeTask}
+          setActiveTask={setActiveTask}
+          status={{
+            mood: alreadySubmitted,
+            quest: questCompleted,
+            minigame: minigameCompleted,
+          }}
+          nextMoodXpPreview={nextMoodXpPreview}
+          moodPanel={
+            <MoodPanel
+              alreadySubmitted={alreadySubmitted}
+              todayMood={data?.todayMood ?? null}
+              result={result}
+              rating={rating}
+              note={note}
+              currentColor={currentColor}
+              error={error}
+              submitting={submitting}
+              rewardPreview={nextMoodXpPreview}
+              onRatingChange={setRating}
+              onNoteChange={setNote}
+              onSubmit={handleSubmit}
+            />
+          }
+          questPanel={
+            <DailyQuestSection
+              data={engagement}
+              message={engagementMessage}
+              questAnswers={questAnswers}
+              onQuestAnswerChange={(id, value) =>
+                setQuestAnswers((current) => ({ ...current, [id]: value }))
               }
-              key={`task-${activeTask}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <MoodPanel
-                alreadySubmitted={alreadySubmitted}
-                todayMood={data?.todayMood ?? null}
-                result={result}
-                rating={rating}
-                note={note}
-                currentColor={currentColor}
-                error={error}
-                submitting={submitting}
-                rewardPreview={nextMoodXpPreview}
-                onRatingChange={setRating}
-                onNoteChange={setNote}
-                onSubmit={handleSubmit}
-              />
-            </motion.div>
-
-            <motion.div
-              className={
-                activeTask === "quest" ? styles.taskPaneActive : styles.taskPane
+              onQuestComplete={handleQuestComplete}
+            />
+          }
+          minigamePanel={
+            <MiniGamesSection
+              miniGames={miniGames}
+              completions={completionByGameId}
+              answers={answers}
+              message={miniGameMessage}
+              submittingGameId={submittingGameId}
+              onAnswerChange={(gameId, value) =>
+                setAnswers((current) => ({ ...current, [gameId]: value }))
               }
-              key={`quest-${activeTask}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <DailyQuestSection
-                data={engagement}
-                message={engagementMessage}
-                questAnswers={questAnswers}
-                onQuestAnswerChange={(id, value) =>
-                  setQuestAnswers((current) => ({ ...current, [id]: value }))
-                }
-                onQuestComplete={handleQuestComplete}
-              />
-            </motion.div>
+              onComplete={handleMiniGameComplete}
+            />
+          }
+        />
 
-            <motion.div
-              className={
-                activeTask === "minigame"
-                  ? styles.taskPaneActive
-                  : styles.taskPane
-              }
-              key={`game-${activeTask}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <MiniGamesSection
-                miniGames={miniGames}
-                completions={completionByGameId}
-                answers={answers}
-                message={miniGameMessage}
-                submittingGameId={submittingGameId}
-                onAnswerChange={(gameId, value) =>
-                  setAnswers((current) => ({ ...current, [gameId]: value }))
-                }
-                onComplete={handleMiniGameComplete}
-              />
-            </motion.div>
-          </section>
+        <RewardShopPanel
+          data={engagement}
+          nextReward={nextReward}
+          onOpenShop={() => {
+            setSelectedRewardId(
+              (current) => current ?? engagement.rewards[0]?.id ?? null,
+            );
+            setShopOpen(true);
+          }}
+        />
+
+        <div className={styles.twoColumnBand}>
+          <CalendarSection
+            data={engagement}
+            weather={weather}
+            weatherLoading={weatherLoading}
+            weatherError={weatherError}
+          />
+          <GardenInventoryPanel
+            data={engagement}
+            onUseProtection={handleUseProtection}
+          />
         </div>
 
-        <motion.aside
-          className={styles.sideColumn}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          {data?.level && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-            >
-              {/* <LevelCard level={data.level} /> */}
-            </motion.div>
-          )}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.55 }}
-          >
-            <RewardShopPanel
-              data={engagement}
-              onOpenShop={() => {
-                setSelectedRewardId(
-                  (current) => current ?? engagement.rewards[0]?.id ?? null,
-                );
-                setShopOpen(true);
-              }}
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.6 }}
-          >
-            <GardenInventoryPanel
-              data={engagement}
-              onUseProtection={handleUseProtection}
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.65 }}
-          >
-            <CalendarSection data={engagement} />
-          </motion.div>
-          {(data?.history?.length ?? 0) > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-            >
-              <HistoryPanel history={data!.history} />
-            </motion.div>
-          )}
-        </motion.aside>
-      </motion.section>
+        {(data?.history?.length ?? 0) > 0 && (
+          <HistoryPanel
+            history={data!.history}
+            summary={historySummary}
+            heroGeneratedToday={heroMessage.source === "ai_generated"}
+          />
+        )}
+      </motion.div>
 
       {shopOpen && (
         <motion.div
@@ -827,6 +893,7 @@ function TypewriterText({ text }: { text: string }) {
 
   return (
     <motion.h2
+      className={styles.typewriterHeroTitle}
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -842,6 +909,133 @@ function TypewriterText({ text }: { text: string }) {
         </motion.span>
       )}
     </motion.h2>
+  );
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className={styles.sectionHeader}>
+      <div>
+        <TextLabel className={styles.eyebrow}>{eyebrow}</TextLabel>
+        <TextSectionTitle as="h2">{title}</TextSectionTitle>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function StatBadge({ label, value }: { label: string; value: string }) {
+  return (
+    <span className={styles.statBadge}>
+      <TextLabel as="small">{label}</TextLabel>
+      <TextCaption as="strong">{value}</TextCaption>
+    </span>
+  );
+}
+
+function ActivityStatus({ done }: { done: boolean }) {
+  return (
+    <span className={done ? styles.statusDone : styles.statusPending}>
+      {done ? "Selesai" : "Belum selesai"}
+    </span>
+  );
+}
+
+function DailyActivitiesSection({
+  activeTask,
+  setActiveTask,
+  status,
+  nextMoodXpPreview,
+  moodPanel,
+  questPanel,
+  minigamePanel,
+}: {
+  activeTask: "mood" | "quest" | "minigame";
+  setActiveTask: (task: "mood" | "quest" | "minigame") => void;
+  status: { mood: boolean; quest: boolean; minigame: boolean };
+  nextMoodXpPreview: number;
+  moodPanel: ReactNode;
+  questPanel: ReactNode;
+  minigamePanel: ReactNode;
+}) {
+  return (
+    <section className={styles.flowSection}>
+      <SectionHeader
+        eyebrow="Aktivitas Hari Ini"
+        title="Satu-Satu Dulu Ya"
+        action={
+          <span className={styles.rewardBadge}>
+            +{nextMoodXpPreview} XP siap
+          </span>
+        }
+      />
+
+      <div className={styles.activityTabs} aria-label="Pilih aktivitas">
+        <button
+          className={
+            activeTask === "mood"
+              ? styles.activityTabActive
+              : styles.activityTab
+          }
+          onClick={() => setActiveTask("mood")}
+        >
+          <span>Mood</span>
+          <ActivityStatus done={status.mood} />
+        </button>
+        <button
+          className={
+            activeTask === "quest"
+              ? styles.activityTabActive
+              : styles.activityTab
+          }
+          onClick={() => setActiveTask("quest")}
+        >
+          <span>Quest</span>
+          <ActivityStatus done={status.quest} />
+        </button>
+        <button
+          className={
+            activeTask === "minigame"
+              ? styles.activityTabActive
+              : styles.activityTab
+          }
+          onClick={() => setActiveTask("minigame")}
+        >
+          <span>Mini-game</span>
+          <ActivityStatus done={status.minigame} />
+        </button>
+      </div>
+
+      <div
+        className={
+          activeTask === "mood" ? styles.taskPaneActive : styles.taskPane
+        }
+      >
+        {moodPanel}
+      </div>
+      <div
+        className={
+          activeTask === "quest" ? styles.taskPaneActive : styles.taskPane
+        }
+      >
+        {questPanel}
+      </div>
+      <div
+        className={
+          activeTask === "minigame" ? styles.taskPaneActive : styles.taskPane
+        }
+      >
+        {minigamePanel}
+      </div>
+    </section>
   );
 }
 
@@ -885,20 +1079,20 @@ function DashboardHero({
       >
         <div>
           <p className={styles.countdownTitle}>
-            {target?.title ?? "Couple countdown"}
+            {target?.title ?? "Hitung Mundur"}
           </p>
           {target ? (
             <>
-              <h1>{days} hari lagi</h1>
+              <TextHeroTitle as="h1">{days} Hari Lagi</TextHeroTitle>
               <p className={styles.countdownMeta}>
                 {target.eventTitle} · {formatReadableDate(target.date)}
               </p>
             </>
           ) : (
             <>
-              <h1>Belum ada event</h1>
+              <TextHeroTitle as="h1">Belum Ada Event</TextHeroTitle>
               <p className={styles.countdownMeta}>
-                Ditunggu yaa kita planning duls mwehehe.
+                Nanti kita rencanakan pelan-pelan.
               </p>
             </>
           )}
@@ -955,7 +1149,7 @@ function DashboardHero({
         transition={{ duration: 0.5, delay: 0.25 }}
       >
         <TypewriterText text={message.title} />
-        <p>{message.body}</p>
+        <TextBody>{message.body}</TextBody>
       </motion.div>
     </motion.section>
   );
@@ -988,7 +1182,7 @@ function FloatingLetterTeaser({
         type="button"
         className={styles.letterTeaserButton}
         onClick={onClick}
-        aria-label="Download letter to PDF"
+        aria-label="Unduh surat jadi PDF"
         whileHover={{ y: -2, scale: 1.03 }}
         whileTap={{ scale: 0.96 }}
       >
@@ -1006,7 +1200,7 @@ function FloatingLetterTeaser({
           <path d="m4.8 16.2 5.3-4" />
           <path d="m19.2 16.2-5.3-4" />
         </svg>
-        <span>Download to PDF</span>
+        <span>Unduh PDF</span>
         <span className={styles.letterTeaserSeal} aria-hidden="true" />
       </motion.button>
     </div>
@@ -1075,8 +1269,8 @@ function MoodPanel({
         <>
           <div className={styles.panelHeader}>
             <div>
-              <p className={styles.eyebrow}>Mood check-in</p>
-              <h2>Gimana hari ini?</h2>
+              <TextLabel className={styles.eyebrow}>Mood Hari Ini</TextLabel>
+              <TextSectionTitle as="h2">Gimana Hari Ini?</TextSectionTitle>
             </div>
             <span className={styles.moodBadge}>{rating}/10</span>
           </div>
@@ -1195,7 +1389,7 @@ function MoodPanel({
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.3 }}
             >
-              Reward streak: +{rewardPreview} XP
+              Bonus streak: +{rewardPreview} XP
             </motion.p>
           </motion.div>
         </>
@@ -1225,8 +1419,8 @@ function DailyQuestSection({
     <section className={styles.panel}>
       <div className={styles.panelHeader}>
         <div>
-          <p className={styles.eyebrow}>Daily quest</p>
-          <h2>Quest hari ini</h2>
+          <TextLabel className={styles.eyebrow}>Quest Hari Ini</TextLabel>
+          <TextSectionTitle as="h2">Quest Hari Ini</TextSectionTitle>
         </div>
       </div>
       {message && <p style={s.infoText}>{message}</p>}
@@ -1245,8 +1439,8 @@ function DailyQuestSection({
                   <p style={s.kicker}>
                     {quest?.type} · {quest?.difficulty}
                   </p>
-                  <h3>{quest?.title}</h3>
-                  {quest?.prompt && <p>{quest.prompt}</p>}
+                  <TextCardTitle as="h3">{quest?.title}</TextCardTitle>
+                  {quest?.prompt && <TextBody>{quest.prompt}</TextBody>}
                 </div>
                 {done ? (
                   <button type="button">Selesai</button>
@@ -1302,20 +1496,22 @@ function DailyQuestSection({
 
 function RewardShopPanel({
   data,
+  nextReward,
   onOpenShop,
 }: {
   data: EngagementData;
+  nextReward: any | null;
   onOpenShop: () => void;
 }) {
+  const nextCost = Number(nextReward?.cost_hearts ?? 0);
+  const remaining = Math.max(0, nextCost - data.heartsBalance);
+  const rewardProgress =
+    nextCost > 0 ? Math.min(100, (data.heartsBalance / nextCost) * 100) : 100;
+
   return (
     <section className={`${styles.panel} ${styles.rewardPanel}`}>
-      <div className={styles.panelHeader}>
-        <div>
-          <p className={styles.eyebrow}>Reward shop</p>
-          <h2>Mau tuker hadiah ga?</h2>
-        </div>
-      </div>
-      <div className={styles.shopPreview}>
+      <SectionHeader eyebrow="Pusat Hadiah" title="Hearts Punya Tujuan" />
+      <div className={styles.rewardCenterGrid}>
         <div className={styles.walletCard}>
           <span className={styles.walletLabel}>Hearts kamu</span>
           <div className={styles.walletAmount}>
@@ -1324,17 +1520,44 @@ function RewardShopPanel({
           </div>
           <HeartStack count={data.heartsBalance} />
         </div>
-        <p className={styles.shopHint}>Mau hadiah apa ngook?</p>
+        <div className={styles.nextRewardCard}>
+          <span className={styles.walletLabel}>Hadiah berikutnya</span>
+          {nextReward ? (
+            <>
+              <strong>{nextReward.title}</strong>
+              <p>{nextCost} Hearts</p>
+              <RewardProgress value={rewardProgress} />
+              <small>
+                {remaining > 0
+                  ? `Kamu butuh ${remaining} Hearts lagi`
+                  : "Hearts sudah cukup buat reward ini"}
+              </small>
+            </>
+          ) : (
+            <p>Belum ada reward aktif.</p>
+          )}
+        </div>
         <button
           type="button"
           className={styles.primaryButton}
           onClick={onOpenShop}
           disabled={data.rewards.length === 0}
         >
-          Buka Reward Shop
+          Buka Hadiah
         </button>
       </div>
     </section>
+  );
+}
+
+function RewardProgress({ value }: { value: number }) {
+  return (
+    <div
+      className={styles.rewardProgress}
+      aria-label={`Reward progress ${Math.round(value)}%`}
+    >
+      <span style={{ width: `${Math.round(value)}%` }} />
+    </div>
   );
 }
 
@@ -1357,8 +1580,8 @@ function GardenInventoryPanel({
     <section className={`${styles.panel} ${styles.gardenPanel}`}>
       <div className={styles.panelHeader}>
         <div>
-          <p className={styles.eyebrow}>Mood garden</p>
-          <h2>{garden.title}</h2>
+          <TextLabel className={styles.eyebrow}>Mood Garden</TextLabel>
+          <TextSectionTitle as="h2">{garden.title}</TextSectionTitle>
         </div>
         <span className={styles.gardenStageBadge}>{garden.stageLabel}</span>
       </div>
@@ -1512,105 +1735,202 @@ function GardenInventoryPanel({
   );
 }
 
-function CalendarSection({ data }: { data: EngagementData }) {
-  const events = data.calendar.events.slice(0, 6);
+function formatWeatherValue(value: number | null, suffix: string) {
+  return value === null ? "-" : `${Math.round(value)}${suffix}`;
+}
+
+function CalendarSection({
+  data,
+  weather,
+  weatherLoading,
+  weatherError,
+}: {
+  data: EngagementData;
+  weather: WeatherSnapshot | null;
+  weatherLoading: boolean;
+  weatherError: string;
+}) {
+  const events = data.calendar.events.slice(0, 1);
+  const nextEvent = events[0];
+  const garden = buildMoodGarden(data.gardenItems);
+  const nextBloomCopy =
+    garden.nextBloomIn === 0
+      ? "Bunga baru sudah siap masuk koleksi."
+      : `${garden.nextBloomIn} check-in lagi menuju bloom berikutnya.`;
 
   return (
     <section className={`${styles.panel} ${styles.calendarPanel}`}>
-      <div className={styles.panelHeader}>
-        <div>
-          <p className={styles.eyebrow}>Couple calendar</p>
-          <h2>Agenda dekat</h2>
-        </div>
-      </div>
+      <SectionHeader eyebrow="Kalender Berdua" title="Agenda Dekat" />
       {events.length === 0 ? (
         <p style={s.emptyText}>Belum ada event calendar.</p>
       ) : (
-        <div className={styles.calendarList}>
-          {events.map((event, index) => (
-            <div key={`${event.id}-${index}`} className={styles.calendarRow}>
+        <>
+          {nextEvent && (
+            <div className={styles.upcomingEventCard}>
+              <span>Mendatang</span>
+              <strong>{nextEvent.title ?? "Event"}</strong>
               <time>
-                {event.event_date ??
-                  event.active_date ??
-                  event.requested_at?.slice(0, 10)}
+                {nextEvent.event_date ??
+                  nextEvent.active_date ??
+                  nextEvent.requested_at?.slice(0, 10)}
               </time>
-              <div>
-                <strong>{event.title ?? "Event"}</strong>
-                <span>{event.event_type ?? "Calendar"}</span>
-              </div>
             </div>
-          ))}
-        </div>
+          )}
+          <div className={styles.calendarGardenSummary}>
+            <div className={styles.calendarGardenHeader}>
+              <span>Bloom Berikutnya</span>
+              <strong>{garden.stageLabel}</strong>
+            </div>
+            <p>{nextBloomCopy}</p>
+            <div
+              className={styles.calendarGardenProgress}
+              aria-label={`Mood garden progress ${garden.waterCount} dari ${garden.waterGoal}`}
+            >
+              <span style={{ width: `${garden.progressPercent}%` }} />
+            </div>
+            <small>
+              {garden.waterCount}/{garden.waterGoal} siraman
+            </small>
+          </div>
+        </>
       )}
+      <div className={styles.calendarWeatherCard}>
+        <div className={styles.calendarWeatherHeader}>
+          <span>Cuaca</span>
+          <strong>Open-Meteo</strong>
+        </div>
+        {weatherLoading ? (
+          <p>Memuat cuaca...</p>
+        ) : weatherError ? (
+          <p>{weatherError}</p>
+        ) : weather ? (
+          <>
+            <div className={styles.calendarWeatherMain}>
+              <span>{weather.tone}</span>
+              <strong>{formatWeatherValue(weather.temperature, "° C")}</strong>
+            </div>
+            <p>
+              {weather.label}. Terasa{" "}
+              {formatWeatherValue(weather.apparentTemperature, "° C")}.
+            </p>
+            <div className={styles.calendarWeatherMeta}>
+              <span>
+                Kelembapan {formatWeatherValue(weather.humidity, "%")}
+              </span>
+              <span>
+                Hujan{" "}
+                {formatWeatherValue(
+                  weather.daily.precipitationProbability,
+                  "%",
+                )}
+              </span>
+              <span>
+                Angin {formatWeatherValue(weather.windSpeed, " km/h")}
+              </span>
+            </div>
+            <div className={styles.calendarWeatherAdvice}>
+              <span>Besok</span>
+              <p>
+                {weather.tomorrow.label} -{" "}
+                {formatWeatherValue(
+                  weather.tomorrow.precipitationProbability,
+                  "%",
+                )}{" "}
+                kemungkinan hujan. {weather.tomorrow.advice}
+              </p>
+            </div>
+          </>
+        ) : (
+          <p>Cuaca belum tersedia.</p>
+        )}
+      </div>
     </section>
   );
 }
 
-function HistoryPanel({ history }: { history: DashboardData["history"] }) {
+function HistoryPanel({
+  history,
+  summary,
+  heroGeneratedToday,
+}: {
+  history: DashboardData["history"];
+  summary: {
+    highest: number;
+    lowest: number;
+    average: number;
+    currentStreak: number;
+  };
+  heroGeneratedToday: boolean;
+}) {
+  const today = getTodayDateString();
+
   return (
     <section className={`${styles.panel} ${styles.historyPanel}`}>
-      <div className={styles.panelHeader}>
-        <div>
-          <p className={styles.eyebrow}>History</p>
-          <h2>7 Hari Terakhir</h2>
-        </div>
+      <SectionHeader eyebrow="Riwayat Mood" title="7 Hari Terakhir" />
+      <div className={styles.historySummaryGrid}>
+        <StatBadge
+          label="Highest"
+          value={summary.highest ? `${summary.highest}/10` : "-"}
+        />
+        <StatBadge
+          label="Lowest"
+          value={summary.lowest ? `${summary.lowest}/10` : "-"}
+        />
+        <StatBadge
+          label="Average"
+          value={summary.average ? String(summary.average) : "-"}
+        />
+        <StatBadge label="Streak" value={`${summary.currentStreak} hari`} />
       </div>
-      <div style={s.historyTimelineList}>
-        {history.map((m, idx) => {
-          const dateObj = new Date(m.date + "T00:00:00");
-          const dayName = dateObj.toLocaleDateString("id-ID", {
-            weekday: "long",
-          });
-          const dayNum = dateObj.toLocaleDateString("id-ID", {
-            day: "2-digit",
-          });
-          const monthNum = dateObj.toLocaleDateString("id-ID", {
-            month: "2-digit",
-          });
+      <div className={styles.historyTimelineScroller}>
+        <div className={styles.historyTimelineTrack}>
+          {history.map((m, idx) => {
+            const dateObj = new Date(m.date + "T00:00:00");
+            const dayName = dateObj.toLocaleDateString("id-ID", {
+              weekday: "long",
+            });
+            const dayNum = dateObj.toLocaleDateString("id-ID", {
+              day: "2-digit",
+            });
+            const monthNum = dateObj.toLocaleDateString("id-ID", {
+              month: "2-digit",
+            });
 
-          return (
-            <motion.div
-              key={m.date}
-              style={s.historyTimelineItem}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.05 }}
-              whileHover={{ x: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
-            >
-              {/* Timeline dot */}
-              <div style={s.timelineDot} />
-
-              {/* Left: Date */}
-              <div style={s.historyDateColumn}>
-                <div style={s.historyDayName}>{dayName}</div>
-                <div style={s.historyDayNum}>
-                  {dayNum}/{monthNum}
-                </div>
-              </div>
-
-              {/* Center: Emoji & Rating */}
-              <div style={s.historyMoodColumn}>
-                <div style={s.historyTimelineEmoji}>{EMOJI_MAP[m.rating]}</div>
-                <div style={s.historyRatingColumn}>
-                  <div
-                    style={{
-                      ...s.historyTimelineRating,
-                      color: ratingColor(m.rating),
-                    }}
-                  >
-                    {m.rating}/10
+            return (
+              <motion.div
+                key={m.date}
+                className={styles.historyTimelineCard}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                whileHover={{ x: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.08)" }}
+              >
+                <div className={styles.historyCardTop}>
+                  <span className={styles.historyDot} />
+                  <div>
+                    <p>{dayName}</p>
+                    <time>
+                      {dayNum}/{monthNum}
+                    </time>
                   </div>
-                  <div style={s.historyStreak}>Streak day: {m.streak_day}</div>
                 </div>
-              </div>
-
-              {/* Right: XP */}
-              <div style={s.historyXPColumn}>
-                <div style={s.historyXPBadge}>+{m.xp_earned} XP</div>
-              </div>
-            </motion.div>
-          );
-        })}
+                <div className={styles.historyCardMood}>
+                  <span>{EMOJI_MAP[m.rating]}</span>
+                  <strong style={{ color: ratingColor(m.rating) }}>
+                    {m.rating}/10
+                  </strong>
+                </div>
+                <div className={styles.historyCardMeta}>
+                  <span>+{m.xp_earned} XP</span>
+                  <span>Streak {m.streak_day}</span>
+                  {heroGeneratedToday && m.date === today && (
+                    <span className={styles.heroGeneratedBadge}>AI Hero</span>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -1654,8 +1974,10 @@ function RewardShopModal({
       >
         <div className={styles.modalHeader}>
           <div>
-            <p className={styles.eyebrow}>Reward shop</p>
-            <h2 id="reward-shop-title">Tukar Hearts</h2>
+            <TextLabel className={styles.eyebrow}>Pusat Hadiah</TextLabel>
+            <TextSectionTitle as="h2" id="reward-shop-title">
+              Tukar Hearts
+            </TextSectionTitle>
           </div>
           <button
             type="button"
@@ -2189,7 +2511,7 @@ function MiniGamesSection({
 }) {
   return (
     <section className={styles.panel}>
-      <h2 style={s.cardTitle}>Mini-game Hari Ini</h2>
+      <TextSectionTitle as="h2">Mini-Game Hari Ini</TextSectionTitle>
       {message && <p style={s.infoText}>{message}</p>}
       {miniGames.length === 0 ? (
         <p style={s.emptyText}>
@@ -2209,7 +2531,7 @@ function MiniGamesSection({
                     <p style={s.kicker}>
                       {game.type} · {game.difficulty}
                     </p>
-                    <h3 style={s.gameTitle}>{game.title}</h3>
+                    <TextCardTitle as="h3">{game.title}</TextCardTitle>
                   </div>
                   <span style={s.gameXP}>
                     +{game.xp_reward} XP · +{game.hearts_reward ?? 0} Hearts

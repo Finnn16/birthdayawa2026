@@ -122,7 +122,8 @@ export default function ProfileCard({
             />
           </div>
           <p>
-            {progress}/{safeMax} XP
+            <span>{progress}/{safeMax} XP</span>
+            <strong>{Math.round(progressPercentage)}%</strong>
           </p>
         </div>
 

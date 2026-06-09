@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Quicksand:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -19,7 +19,27 @@
   --orange: #b8a088;
   --radius: 16px;
   --radius-sm: 10px;
-  --font-casual: "Quicksand", sans-serif;
+  --font-primary: "Plus Jakarta Sans", sans-serif;
+  --font-casual: var(--font-primary);
+  --text-label-size: 12px;
+  --text-label-weight: 700;
+  --text-label-line: 16px;
+  --text-label-tracking: 0.08em;
+  --text-caption-size: 14px;
+  --text-caption-weight: 500;
+  --text-caption-line: 20px;
+  --text-body-size: 16px;
+  --text-body-weight: 400;
+  --text-body-line: 26px;
+  --text-card-title-size: 20px;
+  --text-card-title-weight: 600;
+  --text-card-title-line: 28px;
+  --text-section-title-size: 32px;
+  --text-section-title-weight: 600;
+  --text-section-title-line: 40px;
+  --text-hero-title-size: 48px;
+  --text-hero-title-weight: 700;
+  --text-hero-title-line: 54px;
 }
 
 * {
@@ -32,14 +52,15 @@ html,
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
 h2,
 h3,
 .font-display {
-  font-family: "Syne", sans-serif;
+  font-family: var(--font-primary);
 }
