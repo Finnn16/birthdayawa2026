@@ -31,6 +31,7 @@ export async function GET() {
       garden,
       calendarEvents,
       calendarMoods,
+      aiHeroMessage,
       heroMessage,
     ] = await Promise.all([
       db
@@ -98,6 +99,14 @@ export async function GET() {
         .order("date", { ascending: false })
         .limit(30),
       db
+        .from("ai_hero_messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .eq("active_date", today)
+        .limit(1)
+        .maybeSingle(),
+      db
         .from("hero_messages")
         .select("*")
         .eq("is_active", true)
@@ -155,7 +164,13 @@ export async function GET() {
           rewards: [],
         },
       },
-      heroMessage: heroMessage.data ?? fallbackHeroMessage,
+      heroMessage: aiHeroMessage.data
+        ? {
+            ...aiHeroMessage.data,
+            body: aiHeroMessage.data.message,
+            source: "ai_generated",
+          }
+        : heroMessage.data ?? fallbackHeroMessage,
     });
   } catch (error) {
     return NextResponse.json(

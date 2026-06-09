@@ -34,6 +34,7 @@ model User {
   heroMessagesCreated        HeroMessage[]          @relation("HeroMessageCreator")
   notificationCampaignsCreated NotificationCampaign[] @relation("NotificationCampaignCreator")
   notificationDeliveryLogs    NotificationDeliveryLog[]
+  aiHeroMessages              AiHeroMessage[]
 
   @@index([phoneNumber])
   @@map("users")
@@ -59,6 +60,7 @@ model Mood {
   streakDay Int       @default(1) @map("streak_day")
   createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiHeroMessages AiHeroMessage[]
 
   @@unique([userId, date], map: "moods_user_date_unique")
   @@index([userId, date(sort: Desc)], map: "moods_user_id_date_idx")
@@ -416,4 +418,65 @@ model NotificationDeliveryLog {
   @@index([userId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@map("notification_delivery_logs")
+}
+
+model HeroMessageTemplate {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  minRating Int       @map("min_rating")
+  maxRating Int       @map("max_rating")
+  title     String?
+  message   String
+  tone      String    @default("soft")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([minRating, maxRating, isActive])
+  @@map("hero_message_templates")
+}
+
+model AiHeroMessage {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  sourceMoodId     String    @map("source_mood_id") @db.Uuid
+  title            String?
+  summary          String?
+  message          String
+  tone             String
+  generationSource String    @map("generation_source")
+  activeDate       DateTime  @map("active_date") @db.Date
+  isActive         Boolean   @default(true) @map("is_active")
+  requiresReview   Boolean   @default(false) @map("requires_review")
+  promptProfileId  String?   @map("prompt_profile_id") @db.Uuid
+  promptProfileName String?  @map("prompt_profile_name")
+  metadataJson     Json?     @map("metadata_json")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceMood       Mood      @relation(fields: [sourceMoodId], references: [id], onDelete: Cascade)
+  promptProfile    AiHeroPromptProfile? @relation(fields: [promptProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, activeDate])
+  @@index([userId, activeDate(sort: Desc)])
+  @@index([sourceMoodId])
+  @@index([promptProfileId])
+  @@index([requiresReview, createdAt(sort: Desc)])
+  @@map("ai_hero_messages")
+}
+
+model AiHeroPromptProfile {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String
+  systemInstruction  String          @map("system_instruction")
+  userPromptTemplate String          @map("user_prompt_template")
+  language           String          @default("id-ID")
+  styleGuide         String?         @map("style_guide")
+  forbiddenStyle     String?         @map("forbidden_style")
+  maxSentences       Int             @default(2) @map("max_sentences")
+  isActive           Boolean         @default(false) @map("is_active")
+  createdAt          DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  aiHeroMessages     AiHeroMessage[]
+
+  @@index([updatedAt(sort: Desc)])
+  @@map("ai_hero_prompt_profiles")
 }

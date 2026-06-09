@@ -15,6 +15,25 @@ export async function GET() {
   try {
     const db = createServiceRoleClient();
     const today = getTodayDateString();
+    const { data: aiHeroMessage, error: aiHeroError } = await db
+      .from("ai_hero_messages")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .eq("active_date", today)
+      .limit(1)
+      .maybeSingle();
+
+    if (!aiHeroError && aiHeroMessage) {
+      return NextResponse.json({
+        heroMessage: {
+          ...aiHeroMessage,
+          body: aiHeroMessage.message,
+          source: "ai_generated",
+        },
+      });
+    }
+
     const { data, error: heroError } = await db
       .from("hero_messages")
       .select("*")

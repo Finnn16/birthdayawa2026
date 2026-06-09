@@ -13,6 +13,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "Dash", href: "/admin/dashboard" },
   { id: "studio", label: "Content Studio", icon: "Edit", href: "/admin/studio" },
+  { id: "ai-hero-messages", label: "AI Hero", icon: "AI", href: "/admin/ai-hero-messages" },
+  { id: "ai-hero-prompts", label: "AI Prompts", icon: "Prmt", href: "/admin/ai-hero-prompts" },
   { id: "calendar", label: "Calendar", icon: "Cal", href: "/admin/calendar" },
   { id: "notifications", label: "Notification Center", icon: "Bell", href: "/admin/notifications" },
   { id: "analytics", label: "Analytics", icon: "Chart", href: "/admin/analytics" },
